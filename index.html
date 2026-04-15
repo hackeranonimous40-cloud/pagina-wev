@@ -302,16 +302,225 @@
             background: rgba(255,255,255,0.15);
             transform: translateY(-4px);
         }
-        .hero-scroll {
-            position: absolute;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255,255,255,0.4);
-            animation: bounce 2s ease-in-out infinite;
-            cursor: pointer;
-            font-size: 1.5rem;
-        }
+.hero-scroll {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,0.4);
+  animation: bounce 2s ease-in-out infinite;
+  cursor: pointer;
+  font-size: 1.5rem;
+}
+
+/* Leaf Canvas */
+.leaf-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0.6;
+}
+
+/* Hero Text Canvas - Complex Text Effect */
+.hero-text-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0.6;
+}
+
+/* 3D Title Effect */
+.hero-title-3d {
+  display: inline-block;
+  position: relative;
+  transition: transform 0.3s ease;
+  text-shadow: 
+    0 1px 0 #16a34a,
+    0 2px 0 #16a34a,
+    0 3px 0 #16a34a,
+    0 4px 0 #16a34a,
+    0 5px 10px rgba(0,0,0,0.3);
+}
+
+.hero-title-3d:hover {
+  transform: translateY(-5px) rotateX(10deg);
+}
+
+/* Wave Canvas for Products */
+.wave-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.15;
+}
+
+/* Map Pulse Canvas */
+.pulse-canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 400px;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 50%;
+}
+
+/* 360° Panorama Viewer */
+.panorama-container {
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  height: 500px;
+  margin: 0 auto 3rem;
+  border-radius: 30px;
+  overflow: hidden;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.15);
+}
+
+.panorama-canvas {
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  display: block;
+}
+
+.panorama-canvas:active {
+  cursor: grabbing;
+}
+
+.panorama-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+.panorama-hint {
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.95rem;
+  opacity: 0.9;
+  pointer-events: auto;
+}
+
+.panorama-hint i {
+  font-size: 1.2rem;
+  animation: swipeHint 2s ease-in-out infinite;
+}
+
+@keyframes swipeHint {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(10px); }
+}
+
+.panorama-controls {
+  display: flex;
+  gap: 0.8rem;
+  pointer-events: auto;
+}
+
+.pano-btn {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pano-btn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  transform: scale(1.1);
+}
+
+.panorama-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--dark);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: white;
+  z-index: 10;
+  transition: opacity 0.5s ease;
+}
+
+.panorama-loading.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255,255,255,0.1);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .panorama-container {
+    height: 350px;
+    border-radius: 20px;
+  }
+  
+  .panorama-overlay {
+    padding: 1rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .panorama-hint {
+    font-size: 0.85rem;
+  }
+  
+  .pano-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 0.9rem;
+  }
+}
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(40px); }
             to { opacity: 1; transform: translateY(0); }
@@ -730,24 +939,26 @@
         <a href="#contact" class="header-cta">Contactar</a>
     </header>
 
-    <!-- Hero -->
-    <section class="hero">
-        <div class="hero-bg">
-            <div class="hero-gradient"></div>
-            <div class="hero-grid"></div>
-            <div class="hero-glow"></div>
-        </div>
-        
-        <div class="hero-content">
-            <div class="hero-badge">
-                <i class="fas fa-seedling"></i>
-                <span>Productos Frescos y Orgánicos</span>
-            </div>
-            <h1>
-                <span>Bienvenido a</span>
-                Orinoco Farm Z.N
-            </h1>
-            <p class="hero-tagline">Finca agropecuaria dedicada a productos agrícolas frescos de la mejor calidad en Costa Rica. Agricultura sostenible y compromiso con el medio ambiente.</p>
+  <!-- Hero with Complex Text Canvas -->
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="hero-gradient"></div>
+      <div class="hero-grid"></div>
+      <div class="hero-glow"></div>
+      <canvas id="leafCanvas" class="leaf-canvas"></canvas>
+      <canvas id="heroTextCanvas" class="hero-text-canvas"></canvas>
+    </div>
+
+    <div class="hero-content">
+      <div class="hero-badge">
+        <i class="fas fa-seedling"></i>
+        <span>Productos Frescos y Orgánicos</span>
+      </div>
+      <h1>
+        <span>Bienvenido a</span>
+        <span class="hero-title-3d">Orinoco Farm Z.N</span>
+      </h1>
+      <p class="hero-tagline">Finca agropecuaria dedicada a productos agrícolas frescos de la mejor calidad en Costa Rica. Agricultura sostenible y compromiso con el medio ambiente.</p>
             
             <div class="hero-stats">
                 <div class="hero-stat">
@@ -809,15 +1020,16 @@
         </div>
     </section>
 
-    <!-- Products -->
-    <section class="products" id="products">
-        <div class="container">
-            <div class="section-header">
-                <h2>Nuestros Productos</h2>
-                <p>Variedad de productos agrícolas frescos y de calidad</p>
-                <div class="section-line"></div>
-            </div>
-            <div class="products-grid">
+  <!-- Products -->
+  <section class="products" id="products">
+    <canvas id="waveCanvas" class="wave-canvas"></canvas>
+    <div class="container">
+      <div class="section-header">
+        <h2>Nuestros Productos</h2>
+        <p>Variedad de productos agrícolas frescos y de calidad</p>
+        <div class="section-line"></div>
+      </div>
+      <div class="products-grid">
                 <div class="product-card">
                     <div class="product-emoji">🍠</div>
                     <h4>Camote</h4>
@@ -888,27 +1100,50 @@
         </div>
     </section>
 
-    <!-- Location -->
-    <section class="location" id="location">
-        <div class="container">
-            <div class="section-header">
-                <h2>Encuéntrenos</h2>
-                <p>Visítanos en nuestra ubicación</p>
-                <div class="section-line"></div>
-            </div>
-            <div class="location-card">
-                <div class="location-content">
-                    <div class="location-icon">📍</div>
-                    <h3>Granja Orinoco</h3>
-                    <p>San Carlos, Alajuela, Costa Rica</p>
-                    <a href="https://www.google.com/maps/place/Granja+Orinoco/@10.366444,-84.5772217,17z" target="_blank" class="location-btn">
-                        <i class="fas fa-external-link-alt"></i>
-                        Ver en Google Maps
-                    </a>
-                </div>
-            </div>
+  <!-- Location with 360° Panorama -->
+  <section class="location" id="location">
+    <div class="container">
+      <div class="section-header">
+        <h2>Encuéntrenos</h2>
+        <p>Explora nuestra finca en 360° y visítanos</p>
+        <div class="section-line"></div>
+      </div>
+      
+      <!-- 360° Panorama Viewer -->
+      <div class="panorama-container">
+        <canvas id="panoramaCanvas" class="panorama-canvas"></canvas>
+        <div class="panorama-overlay">
+          <div class="panorama-hint">
+            <i class="fas fa-arrows-alt-h"></i>
+            <span>Arrastra para explorar 360°</span>
+          </div>
+          <div class="panorama-controls">
+            <button class="pano-btn" id="panoLeft" title="Girar izquierda"><i class="fas fa-chevron-left"></i></button>
+            <button class="pano-btn" id="panoAuto" title="Auto-rotar"><i class="fas fa-play"></i></button>
+            <button class="pano-btn" id="panoRight" title="Girar derecha"><i class="fas fa-chevron-right"></i></button>
+            <button class="pano-btn" id="panoFullscreen" title="Pantalla completa"><i class="fas fa-expand"></i></button>
+          </div>
         </div>
-    </section>
+        <div class="panorama-loading" id="panoLoading">
+          <div class="loading-spinner"></div>
+          <span>Cargando vista panorámica...</span>
+        </div>
+      </div>
+      
+      <div class="location-card" style="position: relative; overflow: visible; margin-top: 3rem;">
+        <canvas id="pulseCanvas" class="pulse-canvas"></canvas>
+        <div class="location-content" style="position: relative; z-index: 1;">
+          <div class="location-icon">📍</div>
+          <h3>Granja Orinoco</h3>
+          <p>San Carlos, Alajuela, Costa Rica</p>
+          <a href="https://www.google.com/maps/place/Granja+Orinoco/@10.366444,-84.5772217,17z" target="_blank" class="location-btn">
+            <i class="fas fa-external-link-alt"></i>
+            Ver en Google Maps
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
 
     <!-- Contact -->
     <section class="contact" id="contact">
@@ -985,14 +1220,1211 @@
             observer.observe(el);
         });
 
-        setTimeout(() => {
-            document.querySelectorAll('.feature-card, .product-card, .gallery-item').forEach((el, i) => {
-                setTimeout(() => {
-                    el.style.opacity = '1';
-                    el.style.transform = 'translateY(0)';
-                }, i * 100);
-            });
-        }, 100);
-    </script>
+setTimeout(() => {
+  document.querySelectorAll('.feature-card, .product-card, .gallery-item').forEach((el, i) => {
+    setTimeout(() => {
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+    }, i * 100);
+  });
+}, 100);
+
+// Leaf Particles Effect
+const leafCanvas = document.getElementById('leafCanvas');
+const leafCtx = leafCanvas.getContext('2d');
+let leaves = [];
+let animationId;
+
+// Resize canvas
+function resizeLeafCanvas() {
+  leafCanvas.width = window.innerWidth;
+  leafCanvas.height = window.innerHeight;
+}
+resizeLeafCanvas();
+window.addEventListener('resize', resizeLeafCanvas);
+
+// Leaf class
+class Leaf {
+  constructor() {
+    this.reset();
+  }
+
+  reset() {
+    this.x = Math.random() * leafCanvas.width;
+    this.y = Math.random() * leafCanvas.height - leafCanvas.height;
+    this.size = Math.random() * 8 + 4;
+    this.speedX = (Math.random() - 0.5) * 0.5;
+    this.speedY = Math.random() * 0.8 + 0.3;
+    this.rotation = Math.random() * 360;
+    this.rotationSpeed = (Math.random() - 0.5) * 0.02;
+    this.opacity = Math.random() * 0.4 + 0.2;
+    this.type = Math.random() > 0.5 ? 'leaf' : 'seed';
+    this.sway = Math.random() * 0.02 + 0.01;
+    this.time = Math.random() * Math.PI * 2;
+  }
+
+  update() {
+    this.time += this.sway;
+    this.x += this.speedX + Math.sin(this.time) * 0.5;
+    this.y += this.speedY;
+    this.rotation += this.rotationSpeed;
+
+    // Reset if out of bounds
+    if (this.y > leafCanvas.height + 20 || this.x < -20 || this.x > leafCanvas.width + 20) {
+      this.reset();
+      this.y = -20;
+    }
+  }
+
+  draw() {
+    leafCtx.save();
+    leafCtx.translate(this.x, this.y);
+    leafCtx.rotate(this.rotation);
+    leafCtx.globalAlpha = this.opacity;
+    
+    // Color gradient from green to orange
+    const gradient = leafCtx.createLinearGradient(-this.size, -this.size, this.size, this.size);
+    gradient.addColorStop(0, '#22c55e');
+    gradient.addColorStop(0.5, '#16a34a');
+    gradient.addColorStop(1, '#f59e0b');
+    leafCtx.fillStyle = gradient;
+
+    if (this.type === 'leaf') {
+      // Draw leaf shape
+      leafCtx.beginPath();
+      leafCtx.moveTo(0, -this.size);
+      leafCtx.bezierCurveTo(
+        this.size * 0.5, -this.size * 0.3,
+        this.size * 0.5, this.size * 0.3,
+        0, this.size
+      );
+      leafCtx.bezierCurveTo(
+        -this.size * 0.5, this.size * 0.3,
+        -this.size * 0.5, -this.size * 0.3,
+        0, -this.size
+      );
+      leafCtx.fill();
+      
+      // Leaf vein
+      leafCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+      leafCtx.lineWidth = 1;
+      leafCtx.beginPath();
+      leafCtx.moveTo(0, -this.size * 0.7);
+      leafCtx.lineTo(0, this.size * 0.7);
+      leafCtx.stroke();
+    } else {
+      // Draw seed/pollen
+      leafCtx.beginPath();
+      leafCtx.arc(0, 0, this.size * 0.4, 0, Math.PI * 2);
+      leafCtx.fill();
+      
+      // Glow effect
+      leafCtx.shadowBlur = 10;
+      leafCtx.shadowColor = '#22c55e';
+      leafCtx.fill();
+    }
+
+    leafCtx.restore();
+  }
+}
+
+// Create leaves
+for (let i = 0; i < 35; i++) {
+  leaves.push(new Leaf());
+}
+
+// Animation loop
+function animateLeaves() {
+  leafCtx.clearRect(0, 0, leafCanvas.width, leafCanvas.height);
+  
+  leaves.forEach(leaf => {
+    leaf.update();
+    leaf.draw();
+  });
+  
+  animationId = requestAnimationFrame(animateLeaves);
+}
+
+// Start animation
+animateLeaves();
+
+// Pause when tab is hidden
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    cancelAnimationFrame(animationId);
+  } else {
+    animateLeaves();
+  }
+});
+
+// ============================================
+// WAVE CANVAS - Field Waves Effect
+// ============================================
+const waveCanvas = document.getElementById('waveCanvas');
+const waveCtx = waveCanvas.getContext('2d');
+let waveAnimationId;
+let waveTime = 0;
+
+function resizeWaveCanvas() {
+  const section = document.getElementById('products');
+  if (section) {
+    waveCanvas.width = section.offsetWidth;
+    waveCanvas.height = section.offsetHeight;
+  }
+}
+
+// Delay resize until section is loaded
+setTimeout(resizeWaveCanvas, 100);
+window.addEventListener('resize', resizeWaveCanvas);
+
+function drawWaves() {
+  waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
+  
+  const waveCount = 8;
+  const amplitude = 30;
+  const frequency = 0.008;
+  
+  for (let i = 0; i < waveCount; i++) {
+    const y = (i / waveCount) * waveCanvas.height + waveCanvas.height * 0.2;
+    const offset = i * 0.5;
+    
+    waveCtx.beginPath();
+    waveCtx.moveTo(0, y);
+    
+    for (let x = 0; x <= waveCanvas.width; x += 5) {
+      const waveY = y + 
+        Math.sin(x * frequency + waveTime * 0.02 + offset) * amplitude * 
+        Math.sin(x / waveCanvas.width * Math.PI);
+      waveCtx.lineTo(x, waveY);
+    }
+    
+    // Gradient stroke
+    const gradient = waveCtx.createLinearGradient(0, y - amplitude, 0, y + amplitude);
+    gradient.addColorStop(0, `rgba(34, 197, 94, ${0.3 - i * 0.03})`);
+    gradient.addColorStop(0.5, `rgba(22, 163, 74, ${0.4 - i * 0.03})`);
+    gradient.addColorStop(1, `rgba(245, 158, 11, ${0.2 - i * 0.02})`);
+    
+    waveCtx.strokeStyle = gradient;
+    waveCtx.lineWidth = 2;
+    waveCtx.lineCap = 'round';
+    waveCtx.stroke();
+  }
+  
+  waveTime++;
+  waveAnimationId = requestAnimationFrame(drawWaves);
+}
+
+drawWaves();
+
+// Pause wave animation when not visible
+const waveObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      if (!waveAnimationId) drawWaves();
+    } else {
+      cancelAnimationFrame(waveAnimationId);
+      waveAnimationId = null;
+    }
+  });
+}, { threshold: 0.1 });
+
+waveObserver.observe(document.getElementById('products'));
+
+// ============================================
+// PULSE CANVAS - Map Location Effect
+// ============================================
+const pulseCanvas = document.getElementById('pulseCanvas');
+const pulseCtx = pulseCanvas.getContext('2d');
+let pulseAnimationId;
+let pulseTime = 0;
+const pulseRings = [];
+
+// Create pulse rings
+for (let i = 0; i < 5; i++) {
+  pulseRings.push({
+    offset: (i / 5) * Math.PI * 2,
+    speed: 0.02 + i * 0.005
+  });
+}
+
+function drawPulse() {
+  const centerX = pulseCanvas.width / 2;
+  const centerY = pulseCanvas.height / 2;
+  
+  pulseCtx.clearRect(0, 0, pulseCanvas.width, pulseCanvas.height);
+  
+  // Draw concentric pulsing rings
+  pulseRings.forEach((ring, index) => {
+    const radius = 30 + index * 25 + Math.sin(pulseTime * ring.speed + ring.offset) * 10;
+    const opacity = 0.6 - (index * 0.1) + Math.sin(pulseTime * 0.05 + ring.offset) * 0.2;
+    
+    pulseCtx.beginPath();
+    pulseCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    pulseCtx.strokeStyle = `rgba(34, 197, 94, ${Math.max(0, opacity)})`;
+    pulseCtx.lineWidth = 2;
+    pulseCtx.stroke();
+    
+    // Add glow
+    pulseCtx.shadowBlur = 20;
+    pulseCtx.shadowColor = '#22c55e';
+    pulseCtx.stroke();
+    pulseCtx.shadowBlur = 0;
+  });
+  
+  // Draw center pin point
+  pulseCtx.beginPath();
+  pulseCtx.arc(centerX, centerY, 12, 0, Math.PI * 2);
+  pulseCtx.fillStyle = '#22c55e';
+  pulseCtx.fill();
+  
+  // Inner glow
+  const glowGradient = pulseCtx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 30);
+  glowGradient.addColorStop(0, 'rgba(34, 197, 94, 0.6)');
+  glowGradient.addColorStop(1, 'rgba(34, 197, 94, 0)');
+  pulseCtx.fillStyle = glowGradient;
+  pulseCtx.beginPath();
+  pulseCtx.arc(centerX, centerY, 30, 0, Math.PI * 2);
+  pulseCtx.fill();
+  
+  // Pin shadow
+  pulseCtx.beginPath();
+  pulseCtx.arc(centerX + 3, centerY + 3, 12, 0, Math.PI * 2);
+  pulseCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+  pulseCtx.fill();
+  
+  // Pin main
+  pulseCtx.beginPath();
+  pulseCtx.arc(centerX, centerY, 12, 0, Math.PI * 2);
+  const pinGradient = pulseCtx.createRadialGradient(centerX - 3, centerY - 3, 0, centerX, centerY, 12);
+  pinGradient.addColorStop(0, '#4ade80');
+  pinGradient.addColorStop(1, '#22c55e');
+  pulseCtx.fillStyle = pinGradient;
+  pulseCtx.fill();
+  
+  pulseCtx.beginPath();
+  pulseCtx.arc(centerX, centerY, 12, 0, Math.PI * 2);
+  pulseCtx.strokeStyle = '#16a34a';
+  pulseCtx.lineWidth = 2;
+  pulseCtx.stroke();
+  
+  pulseTime++;
+  pulseAnimationId = requestAnimationFrame(drawPulse);
+}
+
+drawPulse();
+
+// Pause pulse animation when not visible
+const pulseObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      if (!pulseAnimationId) drawPulse();
+    } else {
+      cancelAnimationFrame(pulseAnimationId);
+      pulseAnimationId = null;
+    }
+  });
+}, { threshold: 0.1 });
+
+pulseObserver.observe(document.getElementById('location'));
+
+// ============================================
+// FIREWORKS CANVAS - Particle Burst Effect
+// ============================================
+// Create a canvas overlay for the contact section
+const contactSection = document.getElementById('contact');
+const fireworksCanvas = document.createElement('canvas');
+fireworksCanvas.className = 'fireworks-canvas';
+fireworksCanvas.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;';
+contactSection.style.position = 'relative';
+contactSection.insertBefore(fireworksCanvas, contactSection.firstChild);
+
+const fwCtx = fireworksCanvas.getContext('2d');
+let fwAnimationId;
+let particles = [];
+let fwMouseX = 0;
+let fwMouseY = 0;
+
+function resizeFWCanvas() {
+  fireworksCanvas.width = contactSection.offsetWidth;
+  fireworksCanvas.height = contactSection.offsetHeight;
+}
+
+setTimeout(resizeFWCanvas, 100);
+window.addEventListener('resize', resizeFWCanvas);
+
+// Particle class for fireworks
+class Particle {
+  constructor(x, y, color) {
+    this.x = x;
+    this.y = y;
+    this.size = Math.random() * 4 + 2;
+    this.speedX = (Math.random() - 0.5) * 8;
+    this.speedY = (Math.random() - 0.5) * 8;
+    this.life = 1;
+    this.decay = Math.random() * 0.02 + 0.01;
+    this.color = color;
+    this.gravity = 0.1;
+  }
+
+  update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    this.speedY += this.gravity;
+    this.life -= this.decay;
+    this.size *= 0.98;
+  }
+
+  draw() {
+    fwCtx.save();
+    fwCtx.globalAlpha = this.life;
+    fwCtx.fillStyle = this.color;
+    fwCtx.beginPath();
+    fwCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    fwCtx.fill();
+    
+    // Glow
+    fwCtx.shadowBlur = 10;
+    fwCtx.shadowColor = this.color;
+    fwCtx.fill();
+    fwCtx.restore();
+  }
+}
+
+// Colors for particles
+const fwColors = ['#22c55e', '#f59e0b', '#4ade80', '#f97316', '#86efac'];
+
+function createBurst(x, y) {
+  const color = fwColors[Math.floor(Math.random() * fwColors.length)];
+  for (let i = 0; i < 15; i++) {
+    particles.push(new Particle(x, y, color));
+  }
+}
+
+// Auto burst every few seconds
+let autoBurstTimer = 0;
+
+function animateFireworks() {
+  fwCtx.clearRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
+  
+  // Update and draw particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.update();
+    p.draw();
+    
+    if (p.life <= 0) {
+      particles.splice(i, 1);
+    }
+  }
+  
+  // Auto burst at random positions
+  autoBurstTimer++;
+  if (autoBurstTimer > 100) {
+    createBurst(
+      Math.random() * fireworksCanvas.width,
+      Math.random() * fireworksCanvas.height * 0.5 + fireworksCanvas.height * 0.3
+    );
+    autoBurstTimer = 0;
+  }
+  
+  // Connect nearby particles with faint lines
+  fwCtx.strokeStyle = 'rgba(34, 197, 94, 0.1)';
+  fwCtx.lineWidth = 0.5;
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance < 100) {
+        fwCtx.beginPath();
+        fwCtx.moveTo(particles[i].x, particles[i].y);
+        fwCtx.lineTo(particles[j].x, particles[j].y);
+        fwCtx.stroke();
+      }
+    }
+  }
+  
+  fwAnimationId = requestAnimationFrame(animateFireworks);
+}
+
+animateFireworks();
+
+// Click burst on contact section
+contactSection.addEventListener('click', (e) => {
+  const rect = fireworksCanvas.getBoundingClientRect();
+  createBurst(e.clientX - rect.left, e.clientY - rect.top);
+});
+
+// Pause when not visible
+const fwObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      if (!fwAnimationId) animateFireworks();
+    } else {
+      cancelAnimationFrame(fwAnimationId);
+      fwAnimationId = null;
+    }
+  });
+}, { threshold: 0.1 });
+
+fwObserver.observe(contactSection);
+
+// ============================================
+// HERO COMPLEX TEXT CANVAS - HTML-in-Canvas style
+// ============================================
+const heroTextCanvas = document.getElementById('heroTextCanvas');
+const heroTextCtx = heroTextCanvas.getContext('2d');
+let heroTextAnimationId;
+let heroTextTime = 0;
+
+function resizeHeroTextCanvas() {
+  heroTextCanvas.width = window.innerWidth;
+  heroTextCanvas.height = window.innerHeight;
+}
+resizeHeroTextCanvas();
+window.addEventListener('resize', resizeHeroTextCanvas);
+
+// Text elements to render (like html-in-canvas demo)
+const heroTextElements = [
+  { text: '🌱', x: 0.15, y: 0.25, size: 60, rotation: -15, speed: 0.01 },
+  { text: '🍠', x: 0.85, y: 0.35, size: 50, rotation: 20, speed: 0.015 },
+  { text: '🌶️', x: 0.1, y: 0.7, size: 55, rotation: -25, speed: 0.012 },
+  { text: '🥔', x: 0.9, y: 0.65, size: 45, rotation: 15, speed: 0.018 },
+  { text: '🍌', x: 0.75, y: 0.15, size: 50, rotation: -10, speed: 0.014 },
+  { text: '🌿', x: 0.25, y: 0.8, size: 55, rotation: 30, speed: 0.016 },
+];
+
+// Vertical text
+const verticalTexts = [
+  { text: 'ORGÁNICO', x: 0.05, y: 0.5, size: 24 },
+  { text: 'NATURAL', x: 0.95, y: 0.5, size: 24 },
+];
+
+function drawHeroComplexText() {
+  heroTextCtx.clearRect(0, 0, heroTextCanvas.width, heroTextCanvas.height);
+  
+  // Draw floating emojis with rotation
+  heroTextElements.forEach((elem, i) => {
+    const x = elem.x * heroTextCanvas.width;
+    const y = elem.y * heroTextCanvas.height;
+    const floatOffset = Math.sin(heroTextTime * elem.speed + i) * 15;
+    const rotation = elem.rotation + Math.sin(heroTextTime * 0.02 + i) * 10;
+    const opacity = 0.4 + Math.sin(heroTextTime * 0.03 + i) * 0.2;
+    
+    heroTextCtx.save();
+    heroTextCtx.translate(x, y + floatOffset);
+    heroTextCtx.rotate((rotation * Math.PI) / 180);
+    heroTextCtx.globalAlpha = opacity;
+    heroTextCtx.font = `${elem.size}px 'Space Grotesk', sans-serif`;
+    heroTextCtx.textAlign = 'center';
+    heroTextCtx.textBaseline = 'middle';
+    heroTextCtx.fillText(elem.text, 0, 0);
+    heroTextCtx.restore();
+  });
+  
+  // Draw vertical text
+  verticalTexts.forEach((text) => {
+    const x = text.x * heroTextCanvas.width;
+    const y = text.y * heroTextCanvas.height;
+    
+    heroTextCtx.save();
+    heroTextCtx.translate(x, y);
+    heroTextCtx.rotate(text.x < 0.5 ? -Math.PI / 2 : Math.PI / 2);
+    heroTextCtx.globalAlpha = 0.15;
+    heroTextCtx.font = `900 ${text.size}px 'Outfit', sans-serif`;
+    heroTextCtx.fillStyle = '#22c55e';
+    heroTextCtx.textAlign = 'center';
+    heroTextCtx.textBaseline = 'middle';
+    heroTextCtx.fillText(text.text, 0, 0);
+    heroTextCtx.restore();
+  });
+  
+  // Draw decorative lines
+  heroTextCtx.save();
+  heroTextCtx.globalAlpha = 0.1;
+  heroTextCtx.strokeStyle = '#22c55e';
+  heroTextCtx.lineWidth = 1;
+  
+  // Animated curved lines
+  for (let i = 0; i < 3; i++) {
+    heroTextCtx.beginPath();
+    const startX = heroTextCanvas.width * (0.1 + i * 0.4);
+    const amplitude = 30 + Math.sin(heroTextTime * 0.02 + i) * 10;
+    
+    for (let x = 0; x < heroTextCanvas.width * 0.3; x += 5) {
+      const y = heroTextCanvas.height * (0.3 + i * 0.2) + 
+                Math.sin((x + heroTextTime * 2) * 0.01) * amplitude;
+      if (x === 0) heroTextCtx.moveTo(startX + x, y);
+      else heroTextCtx.lineTo(startX + x, y);
+    }
+    heroTextCtx.stroke();
+  }
+  heroTextCtx.restore();
+  
+  heroTextTime++;
+  heroTextAnimationId = requestAnimationFrame(drawHeroComplexText);
+}
+
+drawHeroComplexText();
+
+// ============================================
+// 3D PRODUCT CUBE - Between Products and Videos
+// ============================================
+// Create cube section after products
+const productsSection = document.getElementById('products');
+const cubeSection = document.createElement('section');
+cubeSection.className = 'cube-section';
+cubeSection.innerHTML = `
+  <div class="container">
+    <div class="section-header">
+      <h2>Explora Nuestros Productos</h2>
+      <p>Descubre la variedad de productos frescos que cultivamos</p>
+      <div class="section-line"></div>
+    </div>
+    <div class="cube-container">
+      <div class="cube-wrapper">
+        <div class="cube" id="productCube">
+          <div class="cube-face face-front" data-product="camote">
+            <div class="face-content">
+              <span class="face-emoji">🍠</span>
+              <h3>Camote</h3>
+              <p>Dulce y nutritivo</p>
+            </div>
+          </div>
+          <div class="cube-face face-back" data-product="platano">
+            <div class="face-content">
+              <span class="face-emoji">🍌</span>
+              <h3>Plátano</h3>
+              <p>Fresco y natural</p>
+            </div>
+          </div>
+          <div class="cube-face face-right" data-product="chile">
+            <div class="face-content">
+              <span class="face-emoji">🌶️</span>
+              <h3>Chile Habanero</h3>
+              <p>100% Orgánico</p>
+            </div>
+          </div>
+          <div class="cube-face face-left" data-product="nampi">
+            <div class="face-content">
+              <span class="face-emoji">🥔</span>
+              <h3>Nampi</h3>
+              <p>Tradicional</p>
+            </div>
+          </div>
+          <div class="cube-face face-top" data-product="yuca">
+            <div class="face-content">
+              <span class="face-emoji">🥔</span>
+              <h3>Yuca</h3>
+              <p>Versátil</p>
+            </div>
+          </div>
+          <div class="cube-face face-bottom" data-product="finca">
+            <div class="face-content">
+              <span class="face-emoji">🌱</span>
+              <h3>Orinoco Farm</h3>
+              <p>Calidad Premium</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cube-controls">
+        <button class="cube-btn" onclick="rotateCube('left')"><i class="fas fa-chevron-left"></i></button>
+        <button class="cube-btn" onclick="rotateCube('right')"><i class="fas fa-chevron-right"></i></button>
+        <button class="cube-btn" onclick="rotateCube('up')"><i class="fas fa-chevron-up"></i></button>
+        <button class="cube-btn" onclick="rotateCube('down')"><i class="fas fa-chevron-down"></i></button>
+      </div>
+      <p class="cube-hint">Haz clic en las caras del cubo para ver detalles</p>
+    </div>
+  </div>
+`;
+productsSection.after(cubeSection);
+
+// Add cube styles
+const cubeStyles = document.createElement('style');
+cubeStyles.textContent = `
+  .cube-section {
+    padding: 10rem 2rem;
+    background: linear-gradient(180deg, #f1f5f9 0%, var(--white) 50%, var(--dark) 100%);
+    perspective: 1000px;
+  }
+  
+  .cube-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3rem;
+  }
+  
+  .cube-wrapper {
+    width: 300px;
+    height: 300px;
+    perspective: 1000px;
+    cursor: grab;
+  }
+  
+  .cube-wrapper:active {
+    cursor: grabbing;
+  }
+  
+  .cube {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .cube-face {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    backface-visibility: visible;
+    border: 3px solid rgba(255,255,255,0.3);
+    box-shadow: 
+      0 0 40px rgba(34, 197, 94, 0.3),
+      inset 0 0 40px rgba(255,255,255,0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .cube-face:hover {
+    box-shadow: 
+      0 0 60px rgba(34, 197, 94, 0.5),
+      inset 0 0 50px rgba(255,255,255,0.2);
+    transform: scale(1.02);
+  }
+  
+  .face-content {
+    text-align: center;
+    color: white;
+    padding: 2rem;
+  }
+  
+  .face-emoji {
+    font-size: 5rem;
+    display: block;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+  }
+  
+  .face-content h3 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  
+  .face-content p {
+    font-size: 1rem;
+    opacity: 0.9;
+    font-weight: 400;
+  }
+  
+  .face-front {
+    background: linear-gradient(135deg, #f97316 0%, #f59e0b 100%);
+    transform: translateZ(150px);
+  }
+  
+  .face-back {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    transform: rotateY(180deg) translateZ(150px);
+  }
+  
+  .face-right {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    transform: rotateY(90deg) translateZ(150px);
+  }
+  
+  .face-left {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    transform: rotateY(-90deg) translateZ(150px);
+  }
+  
+  .face-top {
+    background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+    transform: rotateX(90deg) translateZ(150px);
+  }
+  
+  .face-bottom {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1f2937 100%);
+    transform: rotateX(-90deg) translateZ(150px);
+  }
+  
+  .cube-controls {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .cube-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--primary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .cube-btn:hover {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 10px 30px rgba(34, 197, 94, 0.4);
+  }
+  
+  .cube-hint {
+    color: var(--gray);
+    font-size: 0.9rem;
+    margin-top: 1rem;
+  }
+  
+  /* Product detail modal */
+  .cube-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  
+  .cube-modal.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+  
+  .cube-modal-content {
+    background: white;
+    padding: 3rem;
+    border-radius: 30px;
+    max-width: 500px;
+    text-align: center;
+    transform: scale(0.8);
+    transition: transform 0.3s ease;
+  }
+  
+  .cube-modal.active .cube-modal-content {
+    transform: scale(1);
+  }
+  
+  @media (max-width: 768px) {
+    .cube-wrapper, .cube-face {
+      width: 220px;
+      height: 220px;
+    }
+    
+    .face-front { transform: translateZ(110px); }
+    .face-back { transform: rotateY(180deg) translateZ(110px); }
+    .face-right { transform: rotateY(90deg) translateZ(110px); }
+    .face-left { transform: rotateY(-90deg) translateZ(110px); }
+    .face-top { transform: rotateX(90deg) translateZ(110px); }
+    .face-bottom { transform: rotateX(-90deg) translateZ(110px); }
+    
+    .face-emoji { font-size: 3.5rem; }
+    .face-content h3 { font-size: 1.3rem; }
+    .face-content p { font-size: 0.85rem; }
+  }
+`;
+document.head.appendChild(cubeStyles);
+
+// Cube rotation logic
+let cubeRotationX = -15;
+let cubeRotationY = -25;
+let autoRotate = true;
+const cube = document.getElementById('productCube');
+
+function updateCubeRotation() {
+  if (cube) {
+    cube.style.transform = `rotateX(${cubeRotationX}deg) rotateY(${cubeRotationY}deg)`;
+  }
+}
+
+function rotateCube(direction) {
+  autoRotate = false;
+  switch(direction) {
+    case 'left': cubeRotationY -= 90; break;
+    case 'right': cubeRotationY += 90; break;
+    case 'up': cubeRotationX += 90; break;
+    case 'down': cubeRotationX -= 90; break;
+  }
+  updateCubeRotation();
+  
+  // Resume auto-rotation after 5 seconds
+  setTimeout(() => { autoRotate = true; }, 5000);
+}
+
+// Auto rotation
+setInterval(() => {
+  if (autoRotate && cube) {
+    cubeRotationY += 0.3;
+    updateCubeRotation();
+  }
+}, 50);
+
+// Drag to rotate
+let isDragging = false;
+let startX, startY;
+
+if (cube) {
+  const cubeWrapper = document.querySelector('.cube-wrapper');
+  
+  cubeWrapper.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    autoRotate = false;
+    startX = e.clientX;
+    startY = e.clientY;
+  });
+  
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const deltaX = e.clientX - startX;
+    const deltaY = e.clientY - startY;
+    cubeRotationY += deltaX * 0.5;
+    cubeRotationX -= deltaY * 0.5;
+    startX = e.clientX;
+    startY = e.clientY;
+    updateCubeRotation();
+  });
+  
+  document.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      setTimeout(() => { autoRotate = true; }, 5000);
+    }
+  });
+  
+  // Click on faces
+  document.querySelectorAll('.cube-face').forEach(face => {
+    face.addEventListener('click', (e) => {
+      if (!isDragging) {
+        const product = face.dataset.product;
+        showProductDetail(product);
+      }
+    });
+  });
+}
+
+// Product detail modal
+function showProductDetail(product) {
+  const productInfo = {
+    camote: { name: 'Camote', desc: 'Rico en vitaminas A y C, fibra y potasio. Ideal para acompañar cualquier comida.', emoji: '🍠' },
+    platano: { name: 'Plátano', desc: 'Fuente de potasio y energía natural. Perfecto para desayunos y postres.', emoji: '🍌' },
+    chile: { name: 'Chile Habanero Chocolate', desc: '100% orgánico, sin químicos. Sabor intenso y picante único.', emoji: '🌶️' },
+    nampi: { name: 'Nampi', desc: 'Raíz tradicional de Costa Rica. Sabor único y textura suave.', emoji: '🥔' },
+    yuca: { name: 'Yuca', desc: 'Versátil y nutritiva. Excelente fuente de carbohidratos complejos.', emoji: '🥔' },
+    finca: { name: 'Orinoco Farm', desc: 'Comprometidos con la agricultura sostenible y productos de calidad premium.', emoji: '🌱' }
+  };
+  
+  const info = productInfo[product];
+  if (!info) return;
+  
+  // Create modal
+  const modal = document.createElement('div');
+  modal.className = 'cube-modal active';
+  modal.innerHTML = `
+    <div class="cube-modal-content">
+      <div style="font-size: 5rem; margin-bottom: 1rem;">${info.emoji}</div>
+      <h2 style="font-family: 'Outfit', sans-serif; font-size: 2rem; margin-bottom: 1rem; color: var(--dark);">${info.name}</h2>
+      <p style="color: var(--gray); line-height: 1.8; margin-bottom: 2rem;">${info.desc}</p>
+      <button onclick="this.closest('.cube-modal').remove()" 
+              style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); 
+                     color: white; border: none; padding: 1rem 2.5rem; border-radius: 50px; 
+                     font-weight: 600; cursor: pointer; font-size: 1rem; 
+                     box-shadow: 0 10px 30px rgba(34, 197, 94, 0.3);
+                     transition: all 0.3s ease;"
+              onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 15px 40px rgba(34, 197, 94, 0.4)';"
+              onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(34, 197, 94, 0.3)';">
+        ¡Entendido!
+      </button>
+    </div>
+  `;
+  
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+  
+  document.body.appendChild(modal);
+}
+
+// Touch support for mobile
+let touchStartX = 0;
+let touchStartY = 0;
+
+const cubeWrapper = document.querySelector('.cube-wrapper');
+if (cubeWrapper) {
+  cubeWrapper.addEventListener('touchstart', (e) => {
+    autoRotate = false;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  
+  cubeWrapper.addEventListener('touchmove', (e) => {
+    const deltaX = e.touches[0].clientX - touchStartX;
+    const deltaY = e.touches[0].clientY - touchStartY;
+    cubeRotationY += deltaX * 0.3;
+    cubeRotationX -= deltaY * 0.3;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    updateCubeRotation();
+  }, { passive: true });
+  
+  cubeWrapper.addEventListener('touchend', () => {
+    setTimeout(() => { autoRotate = true; }, 3000);
+  });
+}
+
+// Initial rotation
+updateCubeRotation();
+
+// ============================================
+// 360° PANORAMA VIEWER
+// ============================================
+const panoramaCanvas = document.getElementById('panoramaCanvas');
+const panoLoading = document.getElementById('panoLoading');
+const panoCtx = panoramaCanvas ? panoramaCanvas.getContext('2d') : null;
+
+if (panoramaCanvas && panoCtx) {
+  // Load the 360° image
+  const panoImage = new Image();
+  // Remove crossOrigin for local files
+  
+  // Set canvas size
+  function resizePanorama() {
+    const container = panoramaCanvas.parentElement;
+    panoramaCanvas.width = container.offsetWidth;
+    panoramaCanvas.height = container.offsetHeight;
+    if (panoImage.complete && panoImage.naturalWidth > 0) {
+      renderPanorama();
+    }
+  }
+  resizePanorama();
+  window.addEventListener('resize', resizePanorama);
+  
+  // Panorama state
+  let panoX = 0; // Horizontal scroll position
+  let isPanoDragging = false;
+  let panoStartX = 0;
+  let panoVelocity = 0;
+  let isPanoAutoRotating = true;
+  let panoAnimationId;
+  let isPanoLoaded = false;
+  
+  // Image loaded successfully
+  panoImage.onload = () => {
+    console.log('Panorama image loaded:', panoImage.width, 'x', panoImage.height);
+    isPanoLoaded = true;
+    if (panoLoading) panoLoading.classList.add('hidden');
+    renderPanorama();
+    startPanoAnimation();
+  };
+  
+  // Image failed to load - show placeholder
+  panoImage.onerror = (e) => {
+    console.error('Failed to load panorama image:', e);
+    if (panoLoading) {
+      panoLoading.innerHTML = `
+        <div style="text-align: center;">
+          <i class="fas fa-image" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+          <p>Error al cargar la imagen</p>
+          <p style="font-size: 0.85rem; opacity: 0.6; margin-top: 0.5rem;">Verifica que "fondo.jpg" exista</p>
+        </div>
+      `;
+    }
+  };
+  
+  // Try to load the image with cache-busting
+  panoImage.src = 'fondo.jpg?' + new Date().getTime();
+  
+  function renderPanorama() {
+    if (!panoImage.complete || panoImage.naturalWidth === 0) return;
+    
+    // Clear canvas
+    panoCtx.fillStyle = '#0a0a0a';
+    panoCtx.fillRect(0, 0, panoramaCanvas.width, panoramaCanvas.height);
+    
+    // Calculate visible portion
+    const aspectRatio = panoImage.width / panoImage.height;
+    const canvasAspect = panoramaCanvas.width / panoramaCanvas.height;
+    
+    // For 360°: show a viewport window sliding over the image
+    const viewportWidth = panoImage.width * (panoramaCanvas.height / panoImage.height);
+    const visibleWidth = panoramaCanvas.width;
+    
+    // Normalize panoX
+    panoX = ((panoX % viewportWidth) + viewportWidth) % viewportWidth;
+    
+    // Draw three copies for seamless looping
+    for (let i = -1; i <= 1; i++) {
+      const drawX = (i * viewportWidth) - panoX;
+      
+      // Source rectangle from image
+      const sourceX = 0;
+      const sourceY = 0;
+      const sourceWidth = panoImage.width;
+      const sourceHeight = panoImage.height;
+      
+      // Destination rectangle on canvas
+      const destX = drawX;
+      const destY = 0;
+      const destWidth = viewportWidth;
+      const destHeight = panoramaCanvas.height;
+      
+      // Only draw if visible
+      if (destX + destWidth > 0 && destX < panoramaCanvas.width) {
+        panoCtx.drawImage(
+          panoImage,
+          sourceX, sourceY, sourceWidth, sourceHeight,
+          destX, destY, destWidth, destHeight
+        );
+      }
+    }
+    
+    // Add vignette effect
+    const gradient = panoCtx.createRadialGradient(
+      panoramaCanvas.width / 2, panoramaCanvas.height / 2, panoramaCanvas.height * 0.3,
+      panoramaCanvas.width / 2, panoramaCanvas.height / 2, panoramaCanvas.height * 0.8
+    );
+    gradient.addColorStop(0, 'transparent');
+    gradient.addColorStop(1, 'rgba(0,0,0,0.3)');
+    panoCtx.fillStyle = gradient;
+    panoCtx.fillRect(0, 0, panoramaCanvas.width, panoramaCanvas.height);
+  }
+  
+  function startPanoAnimation() {
+    function animate() {
+      if (isPanoAutoRotating && !isPanoDragging) {
+        panoX += 0.5; // Auto-rotation speed
+        renderPanorama();
+      } else if (Math.abs(panoVelocity) > 0.1) {
+        // Momentum scrolling
+        panoX += panoVelocity;
+        panoVelocity *= 0.95; // Friction
+        renderPanorama();
+      }
+      panoAnimationId = requestAnimationFrame(animate);
+    }
+    animate();
+  }
+  
+  // Mouse events for dragging
+  panoramaCanvas.addEventListener('mousedown', (e) => {
+    isPanoDragging = true;
+    isPanoAutoRotating = false;
+    panoStartX = e.clientX;
+    panoVelocity = 0;
+    updatePanoPlayButton();
+  });
+  
+  document.addEventListener('mousemove', (e) => {
+    if (!isPanoDragging) return;
+    const deltaX = e.clientX - panoStartX;
+    panoVelocity = deltaX * 0.5;
+    panoX -= deltaX;
+    panoStartX = e.clientX;
+    renderPanorama();
+  });
+  
+  document.addEventListener('mouseup', () => {
+    isPanoDragging = false;
+  });
+  
+  // Touch events for mobile
+  panoramaCanvas.addEventListener('touchstart', (e) => {
+    isPanoDragging = true;
+    isPanoAutoRotating = false;
+    panoStartX = e.touches[0].clientX;
+    panoVelocity = 0;
+    updatePanoPlayButton();
+  }, { passive: true });
+  
+  panoramaCanvas.addEventListener('touchmove', (e) => {
+    if (!isPanoDragging) return;
+    const deltaX = e.touches[0].clientX - panoStartX;
+    panoX -= deltaX;
+    panoStartX = e.touches[0].clientX;
+    renderPanorama();
+  }, { passive: true });
+  
+  panoramaCanvas.addEventListener('touchend', () => {
+    isPanoDragging = false;
+  });
+  
+  // Control buttons
+  const panoLeft = document.getElementById('panoLeft');
+  const panoRight = document.getElementById('panoRight');
+  const panoAuto = document.getElementById('panoAuto');
+  const panoFullscreen = document.getElementById('panoFullscreen');
+  
+  if (panoLeft) {
+    panoLeft.addEventListener('click', () => {
+      panoX -= 100;
+      renderPanorama();
+    });
+  }
+  
+  if (panoRight) {
+    panoRight.addEventListener('click', () => {
+      panoX += 100;
+      renderPanorama();
+    });
+  }
+  
+  function updatePanoPlayButton() {
+    if (panoAuto) {
+      panoAuto.innerHTML = isPanoAutoRotating ? 
+        '<i class="fas fa-pause"></i>' : 
+        '<i class="fas fa-play"></i>';
+    }
+  }
+  
+  if (panoAuto) {
+    panoAuto.addEventListener('click', () => {
+      isPanoAutoRotating = !isPanoAutoRotating;
+      updatePanoPlayButton();
+    });
+  }
+  
+  if (panoFullscreen) {
+    panoFullscreen.addEventListener('click', () => {
+      const container = panoramaCanvas.parentElement;
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        container.requestFullscreen().catch(err => {
+          console.log('Fullscreen not supported');
+        });
+      }
+    });
+  }
+  
+  // Wheel zoom/pan
+  panoramaCanvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    panoX += e.deltaY * 0.5;
+    renderPanorama();
+  }, { passive: false });
+}
+</script>
 </body>
 </html>
