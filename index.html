@@ -923,6 +923,25 @@ footer {
   transform: scale(1.1);
   box-shadow: 0 0 50px rgba(34, 197, 94, 0.6);
 }
+.visit-counter {
+  margin-top: 1.5rem;
+  padding: 0.8rem 1.5rem;
+  background: rgba(255,255,255,0.05);
+  border-radius: 50px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+.visit-counter i {
+  color: var(--primary);
+}
+#visitCount {
+  font-weight: 700;
+  color: var(--primary);
+}
 footer h3 {
   font-family: 'Outfit', sans-serif;
   font-size: 1.8rem;
@@ -1200,6 +1219,10 @@ footer p {
 <img src="fotos/logo.png" alt="Orinoco Farm Logo" class="footer-logo">
 <h3>Orinoco Farm Z.N</h3>
 <p>Tu fuente de productos frescos y orgánicos en Costa Rica</p>
+<div class="visit-counter">
+<i class="fas fa-eye"></i>
+<span id="visitCount">Cargando...</span> visitas
+</div>
 </footer>
 
     <script>
@@ -2198,6 +2221,49 @@ function showProductDetail(product) {
 // Touch support for mobile
 let touchStartX = 0;
 let touchStartY = 0;
+
+// ============================================
+// VISIT COUNTER
+// ============================================
+(function() {
+  const STORAGE_KEY = 'orinoco_farm_visits';
+  const LAST_VISIT_KEY = 'orinoco_farm_last_visit';
+  
+  // Check if this is a new session (5 minutes cooldown)
+  const lastVisit = localStorage.getItem(LAST_VISIT_KEY);
+  const now = Date.now();
+  const isNewSession = !lastVisit || (now - parseInt(lastVisit)) > 5 * 60 * 1000;
+  
+  let visitCount = parseInt(localStorage.getItem(STORAGE_KEY)) || 0;
+  
+  // Increment counter only for new sessions
+  if (isNewSession) {
+    visitCount++;
+    localStorage.setItem(STORAGE_KEY, visitCount);
+    localStorage.setItem(LAST_VISIT_KEY, now);
+  }
+  
+  // Format number with commas
+  const formattedCount = visitCount.toLocaleString();
+  
+  // Update display
+  const counterElement = document.getElementById('visitCount');
+  if (counterElement) {
+    // Animate the counter
+    let current = 0;
+    const increment = Math.ceil(visitCount / 50);
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= visitCount) {
+        current = visitCount;
+        clearInterval(timer);
+      }
+      counterElement.textContent = current.toLocaleString();
+    }, 30);
+  }
+  
+  console.log('Visitas totales:', visitCount);
+})();
 
 const cubeWrapper = document.querySelector('.cube-wrapper');
 if (cubeWrapper) {
