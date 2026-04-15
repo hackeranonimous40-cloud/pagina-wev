@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orinoco Farm Z.N - Finca Agropecuaria Costa Rica</title>
-    <meta name="description" content="Finca agropecuaria en Costa Rica - Productos frescos,camote,yuca,nampi,chile habanero orgánico">
+<title>Orinoco Farm Z.N - Finca Agropecuaria Costa Rica</title>
+<meta name="description" content="Finca agropecuaria en Costa Rica - Productos frescos,camote,yuca,nampi,chile habanero orgánico">
+<link rel="icon" type="image/png" href="fotos/logo.png">
+<link rel="apple-touch-icon" href="fotos/logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -54,19 +56,29 @@
             .cursor { display: block; }
         }
         
-        /* Header */
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            padding: 1.5rem 3rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+/* Header */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 1.5rem 3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.header-logo-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+.header-logo:hover .header-logo-img {
+  transform: scale(1.1);
+}
         .header.scrolled {
             background: rgba(255,255,255,0.9);
             backdrop-filter: blur(30px);
@@ -890,24 +902,38 @@
             color: var(--primary);
         }
 
-        /* Footer */
-        footer {
-            background: #050505;
-            color: var(--white);
-            padding: 4rem 2rem;
-            text-align: center;
-        }
-        footer h3 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.8rem;
-            margin-bottom: 0.6rem;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        footer p {
-            opacity: 0.5;
-        }
+/* Footer */
+footer {
+  background: #050505;
+  color: var(--white);
+  padding: 4rem 2rem;
+  text-align: center;
+}
+.footer-logo {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  object-fit: cover;
+  margin-bottom: 1.5rem;
+  border: 3px solid var(--primary);
+  box-shadow: 0 0 30px rgba(34, 197, 94, 0.4);
+  transition: all 0.3s ease;
+}
+.footer-logo:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 50px rgba(34, 197, 94, 0.6);
+}
+footer h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.8rem;
+  margin-bottom: 0.6rem;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+footer p {
+  opacity: 0.5;
+}
 
         /* Mobile */
         @media (max-width: 968px) {
@@ -926,9 +952,10 @@
 
     <!-- Header -->
     <header class="header" id="header">
-        <a href="#" class="header-logo">
-            🌱 <span>Orinoco</span> Farm
-        </a>
+<a href="#" class="header-logo">
+  <img src="fotos/logo.png" alt="Orinoco Farm Logo" class="header-logo-img">
+  <span>Orinoco</span> Farm
+</a>
         <nav class="header-nav">
             <a href="#about">Nosotros</a>
             <a href="#products">Productos</a>
@@ -1169,10 +1196,11 @@
     </section>
 
     <!-- Footer -->
-    <footer>
-        <h3>🌱 Orinoco Farm Z.N</h3>
-        <p>Tu fuente de productos frescos y orgánicos en Costa Rica</p>
-    </footer>
+<footer>
+<img src="fotos/logo.png" alt="Orinoco Farm Logo" class="footer-logo">
+<h3>Orinoco Farm Z.N</h3>
+<p>Tu fuente de productos frescos y orgánicos en Costa Rica</p>
+</footer>
 
     <script>
         // Header scroll
