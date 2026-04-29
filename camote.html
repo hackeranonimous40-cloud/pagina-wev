@@ -303,42 +303,99 @@
     <script>
         const API_URL = 'https://apiparagit-3yxs.onrender.com/precios';
         const GITHUB_URL = 'https://raw.githubusercontent.com/yeifer125/iadatos/main/historial2025.json';
+        const PROXY_URL = 'https://api.allorigins.win/raw?url=';
         let allData = { api: [], github: [] };
         let priceChart;
 
+        function log(msg) {
+            console.log('[Camote]', msg);
+        }
+
         async function loadAllData() {
             try {
-                const [apiRes, githubRes] = await Promise.all([
-                    fetch(API_URL),
-                    fetch(GITHUB_URL)
-                ]);
-                allData.api = await apiRes.json();
-                allData.github = await githubRes.json();
+                log('Cargando datos...');
+                document.getElementById('plantingTableBody').innerHTML = '<tr><td colspan="4" class="loading"><div class="spinner"></div>Conectando a API...</td></tr>';
+
+                let apiData = [], githubData = [];
+                
+                // Intentar API directa
+                try {
+                    const apiRes = await fetch(API_URL);
+                    if (apiRes.ok) {
+                        apiData = await apiRes.json();
+                        log(`API directa: ${apiData.length} registros`);
+                    } else {
+                        throw new Error(`HTTP ${apiRes.status}`);
+                    }
+                } catch (e) {
+                    log('API directa falló, usando proxy...');
+                    try {
+                        const proxyRes = await fetch(PROXY_URL + encodeURIComponent(API_URL));
+                        if (proxyRes.ok) {
+                            apiData = await proxyRes.json();
+                            log(`API proxy: ${apiData.length} registros`);
+                        }
+                    } catch (e2) {
+                        log('Proxy API también falló');
+                    }
+                }
+                
+                // Intentar GitHub directo
+                try {
+                    const ghRes = await fetch(GITHUB_URL);
+                    if (ghRes.ok) {
+                        githubData = await ghRes.json();
+                        log(`GitHub directo: ${githubData.length} registros`);
+                    } else {
+                        throw new Error(`HTTP ${ghRes.status}`);
+                    }
+                } catch (e) {
+                    log('GitHub directo falló, usando proxy...');
+                    try {
+                        const proxyRes = await fetch(PROXY_URL + encodeURIComponent(GITHUB_URL));
+                        if (proxyRes.ok) {
+                            githubData = await proxyRes.json();
+                            log(`GitHub proxy: ${githubData.length} registros`);
+                        }
+                    } catch (e2) {
+                        log('Proxy GitHub también falló');
+                    }
+                }
+                
+                allData = { api: Array.isArray(apiData) ? apiData : [], github: Array.isArray(githubData) ? githubData : [] };
+                
+                if (allData.api.length === 0 && allData.github.length === 0) {
+                    throw new Error('No se pudieron obtener datos. Verifica tu conexión.');
+                }
+                
                 processData();
             } catch (error) {
-                console.error('Error cargando datos:', error);
-                document.getElementById('plantingTableBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ef4444">Error al cargar datos. Recarga la página.</td></tr>';
+                console.error('Error:', error);
+                document.getElementById('plantingTableBody').innerHTML = `<tr><td colspan="4" style="text-align:center;color:#ef4444">Error: ${error.message}</td></tr>`;
             }
         }
 
         function getCamoteData() {
-            const all = [...allData.github, ...allData.api];
-            return all.filter(item => item.producto?.toLowerCase().includes('camote'));
+            return [...allData.github, ...allData.api].filter(item => item.producto?.toLowerCase().includes('camote'));
         }
 
         function parseDate(dateStr) {
-            const formats = ['%d/%m/%Y', '%Y-%m-%d', '%d/%m/%y'];
-            for (const fmt of formats) {
-                const d = new Date();
-                const parts = dateStr.match(/(\d+)/g);
-                if (parts && parts.length >= 3) {
-                    if (fmt === '%d/%m/%Y' || fmt === '%d/%m/%y') {
-                        const d2 = new Date(parts[2], parts[1] - 1, parts[0]);
-                        if (!isNaN(d2.getTime())) return d2;
-                    }
-                }
+            // Format: DD/M/YYYY or D/M/YYYY or YYYY-MM-DD
+            const parts = dateStr.match(/(\d+)/g);
+            if (!parts || parts.length < 3) return null;
+            let day, month, year;
+            if (dateStr.includes('/')) {
+                day = parseInt(parts[0]);
+                month = parseInt(parts[1]) - 1;
+                year = parseInt(parts[2]);
+            } else if (dateStr.includes('-')) {
+                year = parseInt(parts[0]);
+                month = parseInt(parts[1]) - 1;
+                day = parseInt(parts[2]);
+            } else {
+                return null;
             }
-            const d = new Date(dateStr);
+            const d = new Date(year, month, day);
             return isNaN(d.getTime()) ? null : d;
         }
 
@@ -361,7 +418,9 @@
                 const parsed = parseDate(fecha);
                 if (!parsed) continue;
 
-                const monthKey = `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}`;
+                const year = parsed.getFullYear();
+                const month = parsed.getMonth() + 1;
+                const monthKey = `${year}-${String(month).padStart(2, '0')}`;
                 const price = parseFloat(promedio);
 
                 if (!isNaN(price)) {
@@ -369,7 +428,7 @@
                     monthlyPrices[monthKey].push(price);
 
                     if (!latestDate || parsed > latestDate) latestDate = parsed;
-                    if (parsed.toDateString() === latestDate?.toDateString()) {
+                    if (Math.abs(parsed - latestDate) < 86400000) { // same day
                         todayPrices.push(item);
                     }
                 }
@@ -382,7 +441,8 @@
                 }
             }
 
-            const avgAll = Object.values(monthlyAvg).length > 0 ? Object.values(monthlyAvg).reduce((a, b) => a + b, 0) / Object.values(monthlyAvg).length : 0;
+            const allAvgValues = Object.values(monthlyAvg);
+            const overallAvg = allAvgValues.length ? allAvgValues.reduce((a, b) => a + b, 0) / allAvgValues.length : 0;
 
             const tableData = Object.entries(monthlyAvg)
                 .sort((a, b) => new Date(a[0]) - new Date(b[0]))
@@ -398,7 +458,7 @@
                         year,
                         plantar_year: plantDate.getFullYear(),
                         precio: Math.round(price),
-                        recomendacion: price > avgAll * 1.1 ? 'OPTIMO' : price > avgAll ? 'BUENO' : 'MENOR'
+                        recomendacion: price > overallAvg * 1.1 ? 'OPTIMO' : price > overallAvg ? 'BUENO' : 'MENOR'
                     };
                 });
 
@@ -408,8 +468,8 @@
         function updateUI(monthly, table, today) {
             const sorted = Object.entries(monthly).sort((a, b) => b[1] - a[1]).slice(0, 6);
             const prices = Object.values(monthly);
-            const avg = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
-            const best = prices.length > 0 ? Math.max(...prices) : 0;
+            const avg = prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+            const best = prices.length ? Math.max(...prices) : 0;
 
             document.getElementById('lastUpdate').textContent = new Date().toLocaleString('es-CR');
             document.getElementById('dataCount').textContent = `${Object.keys(monthly).length} meses`;
@@ -451,7 +511,7 @@
         function updateTodayPrices(prices) {
             const container = document.getElementById('todayPrices');
             if (prices.length === 0) {
-                container.innerHTML = '<p style="color:#94a3b8">Cargando precio más reciente...</p>';
+                container.innerHTML = '<p style="color:#94a3b8">Sin datos recientes</p>';
                 return;
             }
             const item = prices[0];
