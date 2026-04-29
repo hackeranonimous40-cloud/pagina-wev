@@ -303,68 +303,85 @@
     <script>
         const API_URL = 'https://apiparagit-3yxs.onrender.com/precios';
         const GITHUB_URL = 'https://raw.githubusercontent.com/yeifer125/iadatos/main/historial2025.json';
-        const PROXY_URL = 'https://api.allorigins.win/raw?url=';
+        const PROXIES = [
+            'https://api.corsproxy.io/?',
+            'https://corsproxy.io/?',
+            'https://thingproxy.free.beehiiv.com/'
+        ];
         let allData = { api: [], github: [] };
         let priceChart;
 
         async function loadAllData() {
             try {
-                appendLog('Cargando datos...');
+                appendLog('Iniciando carga...');
                 
-                let apiData = [];
-                let githubData = [];
+                let apiData = await fetchWithProxy(API_URL);
+                let githubData = await fetchWithProxy(GITHUB_URL);
                 
-                try {
-                    const apiRes = await fetch(API_URL);
-                    if (apiRes.ok) {
-                        const raw = await apiRes.json();
-                        apiData = Array.isArray(raw) ? raw : [];
-                    }
-                } catch (e) {
-                    appendLog('API directa falló, usando proxy...');
-                    try {
-                        const proxyRes = await fetch(PROXY_URL + encodeURIComponent(API_URL));
-                        if (proxyRes.ok) {
-                            const raw = await proxyRes.json();
-                            apiData = Array.isArray(raw) ? raw : [];
-                        }
-                    } catch (e2) { appendLog('Proxy API también falló'); }
-                }
+                allData.api = Array.isArray(apiData) ? apiData : [];
+                allData.github = Array.isArray(githubData) ? githubData : [];
                 
-                try {
-                    const githubRes = await fetch(GITHUB_URL);
-                    if (githubRes.ok) {
-                        const raw = await githubRes.json();
-                        githubData = Array.isArray(raw) ? raw : [];
-                    }
-                } catch (e) {
-                    appendLog('GitHub directa falló, usando proxy...');
-                    try {
-                        const proxyRes = await fetch(PROXY_URL + encodeURIComponent(GITHUB_URL));
-                        if (proxyRes.ok) {
-                            const raw = await proxyRes.json();
-                            githubData = Array.isArray(raw) ? raw : [];
-                        }
-                    } catch (e2) { appendLog('Proxy GitHub también falló'); }
-                }
+                appendLog(`API: ${allData.api.length} regs, GitHub: ${allData.github.length} regs`);
                 
-                allData.api = apiData;
-                allData.github = githubData;
-                
-                appendLog(`Cargados: API=${apiData.length}, GitHub=${githubData.length}`);
-                
-                if (apiData.length === 0 && githubData.length === 0) {
-                    throw new Error('Sin datos disponibles');
+                if (allData.api.length === 0 && allData.github.length === 0) {
+                    showNoDataMessage();
+                    return;
                 }
                 
                 processData();
             } catch (error) {
                 console.error('Error:', error);
-                document.getElementById('plantingTableBody').innerHTML = `<tr><td colspan="4" style="text-align:center;color:#ef4444">Error: ${error.message}</td></tr>`;
+                showError(error.message);
             }
         }
         
+        async function fetchWithProxy(url) {
+            appendLog(`Fetch: ${url.substring(0, 50)}...`);
+            
+            // Intento directo primero
+            try {
+                const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+                if (res.ok) {
+                    const data = await res.json();
+                    appendLog('Directo OK');
+                    return data;
+                }
+            } catch (e) { appendLog(`Directo falló: ${e.message}`); }
+            
+            // Intentar con proxies
+            for (const proxy of PROXIES) {
+                try {
+                    appendLog(`Probando proxy: ${proxy}`);
+                    const res = await fetch(proxy + encodeURIComponent(url), { signal: AbortSignal.timeout(8000) });
+                    if (res.ok) {
+                        const data = await res.json();
+                        appendLog(`Proxy OK: ${proxy.substring(0, 30)}`);
+                        return data;
+                    }
+                } catch (e) { appendLog(`Proxy falló: ${e.message}`); }
+            }
+            
+            throw new Error('No se pudo obtener datos de ninguna fuente');
+        }
+        
         function appendLog(msg) { console.log('[Camote]', msg); }
+        function showError(msg) {
+            document.getElementById('plantingTableBody').innerHTML = 
+                `<tr><td colspan="4" style="text-align:center;color:#ef4444;padding:20px;">
+                    <strong>Error al cargar datos</strong><br>
+                    ${msg}<br><br>
+                    <button onclick="loadAllData()" style="padding:8px 16px;background:#22c55e;color:white;border:none;border-radius:6px;cursor:pointer;">
+                        Reintentar
+                    </button>
+                </td></tr>`;
+        }
+        function showNoDataMessage() {
+            document.getElementById('plantingTableBody').innerHTML = 
+                `<tr><td colspan="4" style="text-align:center;color:#f59e0b;padding:20px;">
+                    No hay datos disponibles en este momento.<br>
+                    Verifica tu conexión o intenta más tarde.
+                </td></tr>`;
+        }
 
         function getCamoteData() {
             const all = [...allData.github, ...allData.api];
