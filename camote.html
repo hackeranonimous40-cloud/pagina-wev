@@ -376,6 +376,7 @@
         }
 
         function getCamoteData() {
+            // Esta función ya no se usa para la tabla, pero la mantenemos para comandos
             return [...allData.github, ...allData.api].filter(item => item.producto?.toLowerCase().includes('camote'));
         }
 
@@ -405,12 +406,41 @@
         }
 
         function processData() {
-            const camoteData = getCamoteData();
-            const monthlyPrices = {};
+            // Separar datos: API (hoy) vs GitHub (histórico)
+            const apiCamote = allData.api.filter(item => item.producto?.toLowerCase().includes('camote'));
+            const githubCamote = allData.github.filter(item => item.producto?.toLowerCase().includes('camote'));
+            
+            // Para precios de HOY: usar solo API (datos más recientes)
             const todayPrices = [];
-            let latestDate = null;
-
-            for (const item of camoteData) {
+            let latestApiDate = null;
+            
+            for (const item of apiCamote) {
+                const fecha = item.fecha;
+                if (!fecha) continue;
+                const parsed = parseDate(fecha);
+                if (!parsed) continue;
+                
+                if (!latestApiDate || parsed > latestApiDate) {
+                    latestApiDate = parsed;
+                }
+            }
+            
+            // Filtrar solo los registros de la fecha más reciente de la API
+            for (const item of apiCamote) {
+                const fecha = item.fecha;
+                if (!fecha) continue;
+                const parsed = parseDate(fecha);
+                if (parsed && latestApiDate && Math.abs(parsed - latestApiDate) < 86400000) {
+                    todayPrices.push(item);
+                }
+            }
+            
+            // Para tabla histórica: combinar GitHub + API
+            const allCamote = [...githubCamote, ...apiCamote];
+            
+            const monthlyPrices = {};
+            
+            for (const item of allCamote) {
                 const fecha = item.fecha;
                 const promedio = item.promedio;
                 if (!fecha || !promedio) continue;
@@ -426,11 +456,6 @@
                 if (!isNaN(price)) {
                     if (!monthlyPrices[monthKey]) monthlyPrices[monthKey] = [];
                     monthlyPrices[monthKey].push(price);
-
-                    if (!latestDate || parsed > latestDate) latestDate = parsed;
-                    if (Math.abs(parsed - latestDate) < 86400000) { // same day
-                        todayPrices.push(item);
-                    }
                 }
             }
 
@@ -511,11 +536,22 @@
         function updateTodayPrices(prices) {
             const container = document.getElementById('todayPrices');
             if (prices.length === 0) {
-                container.innerHTML = '<p style="color:#94a3b8">Sin datos recientes</p>';
+                container.innerHTML = '<p style="color:#94a3b8">Sin datos recientes de la API</p>';
                 return;
             }
             const item = prices[0];
-            document.getElementById('todayBadge').textContent = item.fecha || 'Reciente';
+            // Formatear fecha: viene como "29/4/2026" -> "29/04/2026"
+            let fechaStr = item.fecha || 'Reciente';
+            if (fechaStr && fechaStr.includes('/')) {
+                const parts = fechaStr.split('/');
+                if (parts.length === 3) {
+                    const d = parts[0].padStart(2, '0');
+                    const m = parts[1].padStart(2, '0');
+                    const y = parts[2];
+                    fechaStr = `${d}/${m}/${y}`;
+                }
+            }
+            document.getElementById('todayBadge').textContent = fechaStr;
             container.innerHTML = `<div style="margin-bottom:15px;font-weight:600">${item.producto}</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;"><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÍNIMO</div><div style="font-size:1.3rem;font-weight:700;color:#0ea5e9">₡${parseInt(item.minimo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÁXIMO</div><div style="font-size:1.3rem;font-weight:700;color:#f59e0b">₡${parseInt(item.maximo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">PROMEDIO</div><div style="font-size:1.3rem;font-weight:700;color:#22c55e">₡${parseInt(item.promedio).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MODA</div><div style="font-size:1.3rem;font-weight:700;color:#a855f7">₡${parseInt(item.moda).toLocaleString()}</div></div></div>`;
         }
 
