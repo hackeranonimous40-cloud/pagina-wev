@@ -323,12 +323,19 @@
                     const apiRes = await fetch(API_URL);
                     if (apiRes.ok) {
                         apiData = await apiRes.json();
-                        log(`API directa: ${apiData.length} registros`);
+                        log(`API directa: ${apiData.length} registros totales`);
+                        
+                        // Filtrar solo camote de la API
+                        const camoteOnly = apiData.filter(item => item.producto?.toLowerCase().includes('camote'));
+                        log(`Camote en API: ${camoteOnly.length}`);
+                        if (camoteOnly.length > 0) {
+                            camoteOnly.forEach(item => log(`  - ${item.producto}: ${item.fecha} - ₡${item.promedio}`));
+                        }
                     } else {
                         throw new Error(`HTTP ${apiRes.status}`);
                     }
                 } catch (e) {
-                    log('API directa falló, usando proxy...');
+                    log('API directa falló: ' + e.message);
                     try {
                         const proxyRes = await fetch(PROXY_URL + encodeURIComponent(API_URL));
                         if (proxyRes.ok) {
@@ -336,7 +343,7 @@
                             log(`API proxy: ${apiData.length} registros`);
                         }
                     } catch (e2) {
-                        log('Proxy API también falló');
+                        log('Proxy API también falló: ' + e2.message);
                     }
                 }
                 
@@ -362,7 +369,12 @@
                     }
                 }
                 
-                allData = { api: Array.isArray(apiData) ? apiData : [], github: Array.isArray(githubData) ? githubData : [] };
+                allData = { 
+                    api: Array.isArray(apiData) ? apiData : [], 
+                    github: Array.isArray(githubData) ? githubData : [] 
+                };
+                
+                log(`Total: API=${allData.api.length}, GitHub=${allData.github.length}`);
                 
                 if (allData.api.length === 0 && allData.github.length === 0) {
                     throw new Error('No se pudieron obtener datos. Verifica tu conexión.');
@@ -371,6 +383,7 @@
                 processData();
             } catch (error) {
                 console.error('Error:', error);
+                log('ERROR: ' + error.message);
                 document.getElementById('plantingTableBody').innerHTML = `<tr><td colspan="4" style="text-align:center;color:#ef4444">Error: ${error.message}</td></tr>`;
             }
         }
@@ -382,22 +395,25 @@
 
         function parseDate(dateStr) {
             // Format: DD/M/YYYY or D/M/YYYY or YYYY-MM-DD
-            const parts = dateStr.match(/(\d+)/g);
-            if (!parts || parts.length < 3) return null;
-            let day, month, year;
+            if (!dateStr) return null;
+            
+            // Try DD/MM/YYYY format (API format: "29/4/2026")
             if (dateStr.includes('/')) {
-                day = parseInt(parts[0]);
-                month = parseInt(parts[1]) - 1;
-                year = parseInt(parts[2]);
-            } else if (dateStr.includes('-')) {
-                year = parseInt(parts[0]);
-                month = parseInt(parts[1]) - 1;
-                day = parseInt(parts[2]);
-            } else {
-                return null;
+                const parts = dateStr.split('/');
+                if (parts.length === 3) {
+                    const day = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
+                    const year = parseInt(parts[2], 10);
+                    const d = new Date(year, month, day);
+                    return isNaN(d.getTime()) ? null : d;
+                }
             }
-            const d = new Date(year, month, day);
-            return isNaN(d.getTime()) ? null : d;
+            // Try YYYY-MM-DD format
+            else if (dateStr.includes('-')) {
+                const d = new Date(dateStr);
+                return isNaN(d.getTime()) ? null : d;
+            }
+            return null;
         }
 
         function getMonthName(monthNum) {
@@ -410,10 +426,13 @@
             const apiCamote = allData.api.filter(item => item.producto?.toLowerCase().includes('camote'));
             const githubCamote = allData.github.filter(item => item.producto?.toLowerCase().includes('camote'));
             
+            log(`Camote API: ${apiCamote.length}, Camote GitHub: ${githubCamote.length}`);
+            
             // Para precios de HOY: usar solo API (datos más recientes)
             const todayPrices = [];
             let latestApiDate = null;
             
+            // Encontrar la fecha más reciente en la API
             for (const item of apiCamote) {
                 const fecha = item.fecha;
                 if (!fecha) continue;
@@ -423,6 +442,89 @@
                 if (!latestApiDate || parsed > latestApiDate) {
                     latestApiDate = parsed;
                 }
+            }
+            
+            log(`Fecha más reciente en API: ${latestApiDate ? latestApiDate.toISOString() : 'No encontrada'}`);
+            
+            // Filtrar solo los registros de la fecha más reciente
+            if (latestApiDate) {
+                for (const item of apiCamote) {
+                    const fecha = item.fecha;
+                    if (!fecha) continue;
+                    const parsed = parseDate(fecha);
+                    if (parsed) {
+                        // Comparar solo día, mes, año (ignorar hora)
+                        const sameDay = parsed.getDate() === latestApiDate.getDate() &&
+                                       parsed.getMonth() === latestApiDate.getMonth() &&
+                                       parsed.getFullYear() === latestApiDate.getFullYear();
+                        if (sameDay) {
+                            todayPrices.push(item);
+                        }
+                    }
+                }
+            }
+            
+            log(`Precios de hoy encontrados: ${todayPrices.length}`);
+            if (todayPrices.length > 0) {
+                todayPrices.forEach(item => log(`  HOY: ${item.producto} - ₡${item.promedio}`));
+            }
+            
+            // Para tabla histórica: combinar GitHub + API
+            const allCamote = [...githubCamote, ...apiCamote];
+            
+            const monthlyPrices = {};
+            
+            for (const item of allCamote) {
+                const fecha = item.fecha;
+                const promedio = item.promedio;
+                if (!fecha || !promedio) continue;
+
+                const parsed = parseDate(fecha);
+                if (!parsed) continue;
+
+                const year = parsed.getFullYear();
+                const month = parsed.getMonth() + 1;
+                const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+                const price = parseFloat(promedio);
+
+                if (!isNaN(price)) {
+                    if (!monthlyPrices[monthKey]) monthlyPrices[monthKey] = [];
+                    monthlyPrices[monthKey].push(price);
+                }
+            }
+
+            const monthlyAvg = {};
+            for (const [key, prices] of Object.entries(monthlyPrices)) {
+                if (prices.length > 0) {
+                    monthlyAvg[key] = prices.reduce((a, b) => a + b, 0) / prices.length;
+                }
+            }
+
+            log(`Meses con datos: ${Object.keys(monthlyAvg).length}`);
+            
+            const allAvgValues = Object.values(monthlyAvg);
+            const overallAvg = allAvgValues.length ? allAvgValues.reduce((a, b) => a + b, 0) / allAvgValues.length : 0;
+
+            const tableData = Object.entries(monthlyAvg)
+                .sort((a, b) => new Date(a[0]) - new Date(b[0]))
+                .map(([monthKey, price]) => {
+                    const [year, month] = monthKey.split('-').map(Number);
+                    const plantDate = new Date(year, month - 1, 1);
+                    plantDate.setMonth(plantDate.getMonth() - 3);
+                    plantDate.setDate(plantDate.getDate() - 15);
+
+                    return {
+                        mes_cosecha: getMonthName(month),
+                        mes_plantar: getMonthName(plantDate.getMonth() + 1),
+                        year,
+                        plantar_year: plantDate.getFullYear(),
+                        precio: Math.round(price),
+                        recomendacion: price > overallAvg * 1.1 ? 'OPTIMO' : price > overallAvg ? 'BUENO' : 'MENOR'
+                    };
+                });
+
+            updateUI(monthlyAvg, tableData, todayPrices);
+        }
             }
             
             // Filtrar solo los registros de la fecha más reciente de la API
@@ -535,20 +637,68 @@
 
         function updateTodayPrices(prices) {
             const container = document.getElementById('todayPrices');
-            if (prices.length === 0) {
-                container.innerHTML = '<p style="color:#94a3b8">Sin datos recientes de la API</p>';
+            
+            // Si tenemos precios de hoy (API), mostrarlos
+            if (prices.length > 0) {
+                const item = prices[0];
+                let fechaStr = item.fecha || 'Reciente';
+                if (fechaStr && fechaStr.includes('/')) {
+                    const parts = fechaStr.split('/');
+                    if (parts.length === 3) {
+                        fechaStr = `${parts[0].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[2]}`;
+                    }
+                }
+                document.getElementById('todayBadge').textContent = fechaStr;
+                container.innerHTML = `<div style="margin-bottom:15px;font-weight:600">${item.producto}</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;"><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÍNIMO</div><div style="font-size:1.3rem;font-weight:700;color:#0ea5e9">₡${parseInt(item.minimo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÁXIMO</div><div style="font-size:1.3rem;font-weight:700;color:#f59e0b">₡${parseInt(item.maximo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">PROMEDIO</div><div style="font-size:1.3rem;font-weight:700;color:#22c55e">₡${parseInt(item.promedio).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MODA</div><div style="font-size:1.3rem;font-weight:700;color:#a855f7">₡${parseInt(item.moda).toLocaleString()}</div></div></div>`;
+                return;
+            }
+            
+            // Fallback: buscar el dato más reciente de cualquier fuente
+            const allCamote = [...allData.api, ...allData.github].filter(item => item.producto?.toLowerCase().includes('camote'));
+            if (allCamote.length > 0) {
+                const sorted = allCamote.sort((a, b) => {
+                    const da = parseDate(a.fecha) || new Date(0);
+                    const db = parseDate(b.fecha) || new Date(0);
+                    return db - da;
+                });
+                const latest = sorted[0];
+                let fechaStr = latest.fecha || 'Fecha desconocida';
+                if (fechaStr && fechaStr.includes('/')) {
+                    const parts = fechaStr.split('/');
+                    if (parts.length === 3) {
+                        fechaStr = `${parts[0].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[2]}`;
+                    }
+                }
+                document.getElementById('todayBadge').textContent = fechaStr + ' (histórico)';
+                container.innerHTML = `<div style="margin-bottom:15px;font-weight:600">${latest.producto}</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;"><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÍNIMO</div><div style="font-size:1.3rem;font-weight:700;color:#0ea5e9">₡${parseInt(latest.minimo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÁXIMO</div><div style="font-size:1.3rem;font-weight:700;color:#f59e0b">₡${parseInt(latest.maximo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">PROMEDIO</div><div style="font-size:1.3rem;font-weight:700;color:#22c55e">₡${parseInt(latest.promedio).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MODA</div><div style="font-size:1.3rem;font-weight:700;color:#a855f7">₡${parseInt(latest.moda).toLocaleString()}</div></div></div>`;
+                return;
+            }
+            
+            container.innerHTML = '<p style="color:#94a3b8">Sin datos disponibles</p>';
+        }
+                    }
+                    if (latestItem) {
+                        let fechaStr = latestItem.fecha || 'Reciente';
+                        if (fechaStr && fechaStr.includes('/')) {
+                            const parts = fechaStr.split('/');
+                            if (parts.length === 3) {
+                                fechaStr = `${parts[0].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[2]}`;
+                            }
+                        }
+                        document.getElementById('todayBadge').textContent = fechaStr;
+                        container.innerHTML = `<div style="margin-bottom:15px;font-weight:600">${latestItem.producto}</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;"><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÍNIMO</div><div style="font-size:1.3rem;font-weight:700;color:#0ea5e9">₡${parseInt(latestItem.minimo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÁXIMO</div><div style="font-size:1.3rem;font-weight:700;color:#f59e0b">₡${parseInt(latestItem.maximo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">PROMEDIO</div><div style="font-size:1.3rem;font-weight:700;color:#22c55e">₡${parseInt(latestItem.promedio).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MODA</div><div style="font-size:1.3rem;font-weight:700;color:#a855f7">₡${parseInt(latestItem.moda).toLocaleString()}</div></div></div>`;
+                        return;
+                    }
+                }
+                container.innerHTML = '<p style="color:#94a3b8">Sin datos recientes disponibles</p>';
                 return;
             }
             const item = prices[0];
-            // Formatear fecha: viene como "29/4/2026" -> "29/04/2026"
             let fechaStr = item.fecha || 'Reciente';
             if (fechaStr && fechaStr.includes('/')) {
                 const parts = fechaStr.split('/');
                 if (parts.length === 3) {
-                    const d = parts[0].padStart(2, '0');
-                    const m = parts[1].padStart(2, '0');
-                    const y = parts[2];
-                    fechaStr = `${d}/${m}/${y}`;
+                    fechaStr = `${parts[0].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[2]}`;
                 }
             }
             document.getElementById('todayBadge').textContent = fechaStr;
