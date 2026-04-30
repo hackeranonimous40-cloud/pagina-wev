@@ -303,43 +303,193 @@
     <script>
         const API_URL = 'https://apiparagit-3yxs.onrender.com/precios';
         const GITHUB_URL = 'https://raw.githubusercontent.com/yeifer125/iadatos/main/historial2025.json';
+        const PROXY_URL = 'https://api.allorigins.win/raw?url=';
         let allData = { api: [], github: [] };
         let priceChart;
 
-        async function loadAllData() {
-            try {
-                const [apiRes, githubRes] = await Promise.all([
-                    fetch(API_URL),
-                    fetch(GITHUB_URL)
-                ]);
-                allData.api = await apiRes.json();
-                allData.github = await githubRes.json();
+        function log(msg) {
+            console.log('[Camote]', msg);
+        }
+
+async function loadAllData() {
+try {
+log('Cargando datos...');
+document.getElementById('plantingTableBody').innerHTML = '<tr><td colspan="4" class="loading"><div class="spinner"></div>Conectando a API...</td></tr>';
+document.getElementById('todayPrices').innerHTML = '<div class="spinner"></div> Cargando precios...';
+
+let apiData = [], githubData = [];
+
+// Intentar API directa
+try {
+log(`Tentando API: ${API_URL}`);
+const apiRes = await fetch(API_URL);
+log(`API response status: ${apiRes.status}`);
+if (apiRes.ok) {
+apiData = await apiRes.json();
+log(`API directa: ${apiData.length} registros totales`);
+if (apiData.length > 0 && apiData[0]) {
+log(`Primer registro API: ${JSON.stringify(apiData[0])}`);
+}
+
+// Filtrar solo camote de la API
+const camoteOnly = apiData.filter(item => item.producto?.toLowerCase().includes('camote'));
+log(`Camote en API: ${camoteOnly.length}`);
+if (camoteOnly.length > 0) {
+camoteOnly.forEach(item => log(` - ${item.producto}: ${item.fecha} - ₡${item.promedio}`));
+}
+} else {
+throw new Error(`HTTP ${apiRes.status}`);
+}
+} catch (e) {
+log('API directa falló: ' + e.message);
+try {
+log('Intentando proxy API...');
+const proxyRes = await fetch(PROXY_URL + encodeURIComponent(API_URL));
+if (proxyRes.ok) {
+apiData = await proxyRes.json();
+log(`API proxy: ${apiData.length} registros`);
+if (apiData.length > 0 && apiData[0]) {
+log(`Primer registro API proxy: ${JSON.stringify(apiData[0])}`);
+}
+}
+} catch (e2) {
+log('Proxy API también falló: ' + e2.message);
+}
+}
+
+// Intentar GitHub directo
+try {
+log(`Tentando GitHub: ${GITHUB_URL}`);
+const ghRes = await fetch(GITHUB_URL);
+log(`GitHub response status: ${ghRes.status}`);
+if (ghRes.ok) {
+githubData = await ghRes.json();
+log(`GitHub directo: ${githubData.length} registros`);
+if (githubData.length > 0 && githubData[0]) {
+log(`Primer registro GitHub: ${JSON.stringify(githubData[0])}`);
+}
+} else {
+throw new Error(`HTTP ${ghRes.status}`);
+}
+} catch (e) {
+log('GitHub directo falló: ' + e.message);
+try {
+log('Intentando proxy GitHub...');
+const proxyRes = await fetch(PROXY_URL + encodeURIComponent(GITHUB_URL));
+if (proxyRes.ok) {
+githubData = await proxyRes.json();
+log(`GitHub proxy: ${githubData.length} registros`);
+if (githubData.length > 0 && githubData[0]) {
+log(`Primer registro GitHub proxy: ${JSON.stringify(githubData[0])}`);
+}
+}
+} catch (e2) {
+log('Proxy GitHub también falló: ' + e2.message);
+}
+}
+
+allData = {
+api: Array.isArray(apiData) ? apiData : [],
+github: Array.isArray(githubData) ? githubData : []
+};
+
+log(`Total: API=${allData.api.length}, GitHub=${allData.github.length}`);
+
+if (allData.api.length === 0 && allData.github.length === 0) {
+throw new Error('No se pudieron obtener datos. Verifica tu conexión.');
+}
+
+processData();
+} catch (error) {
+console.error('Error:', error);
+log('ERROR: ' + error.message);
+document.getElementById('plantingTableBody').innerHTML = `<tr><td colspan="4" style="text-align:center;color:#ef4444">Error: ${error.message}</td></tr>`;
+document.getElementById('todayPrices').innerHTML = `<p style="color:#ef4444">Error: ${error.message}</p>`;
+}
+}
+                    } else {
+                        throw new Error(`HTTP ${apiRes.status}`);
+                    }
+                } catch (e) {
+                    log('API directa falló: ' + e.message);
+                    try {
+                        const proxyRes = await fetch(PROXY_URL + encodeURIComponent(API_URL));
+                        if (proxyRes.ok) {
+                            apiData = await proxyRes.json();
+                            log(`API proxy: ${apiData.length} registros`);
+                        }
+                    } catch (e2) {
+                        log('Proxy API también falló: ' + e2.message);
+                    }
+                }
+                
+                // Intentar GitHub directo
+                try {
+                    const ghRes = await fetch(GITHUB_URL);
+                    if (ghRes.ok) {
+                        githubData = await ghRes.json();
+                        log(`GitHub directo: ${githubData.length} registros`);
+                    } else {
+                        throw new Error(`HTTP ${ghRes.status}`);
+                    }
+                } catch (e) {
+                    log('GitHub directo falló, usando proxy...');
+                    try {
+                        const proxyRes = await fetch(PROXY_URL + encodeURIComponent(GITHUB_URL));
+                        if (proxyRes.ok) {
+                            githubData = await proxyRes.json();
+                            log(`GitHub proxy: ${githubData.length} registros`);
+                        }
+                    } catch (e2) {
+                        log('Proxy GitHub también falló');
+                    }
+                }
+                
+                allData = { 
+                    api: Array.isArray(apiData) ? apiData : [], 
+                    github: Array.isArray(githubData) ? githubData : [] 
+                };
+                
+                log(`Total: API=${allData.api.length}, GitHub=${allData.github.length}`);
+                
+                if (allData.api.length === 0 && allData.github.length === 0) {
+                    throw new Error('No se pudieron obtener datos. Verifica tu conexión.');
+                }
+                
                 processData();
             } catch (error) {
-                console.error('Error cargando datos:', error);
-                document.getElementById('plantingTableBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ef4444">Error al cargar datos. Recarga la página.</td></tr>';
+                console.error('Error:', error);
+                log('ERROR: ' + error.message);
+                document.getElementById('plantingTableBody').innerHTML = `<tr><td colspan="4" style="text-align:center;color:#ef4444">Error: ${error.message}</td></tr>`;
             }
         }
 
         function getCamoteData() {
-            const all = [...allData.github, ...allData.api];
-            return all.filter(item => item.producto?.toLowerCase().includes('camote'));
+            // Esta función ya no se usa para la tabla, pero la mantenemos para comandos
+            return [...allData.github, ...allData.api].filter(item => item.producto?.toLowerCase().includes('camote'));
         }
 
         function parseDate(dateStr) {
-            const formats = ['%d/%m/%Y', '%Y-%m-%d', '%d/%m/%y'];
-            for (const fmt of formats) {
-                const d = new Date();
-                const parts = dateStr.match(/(\d+)/g);
-                if (parts && parts.length >= 3) {
-                    if (fmt === '%d/%m/%Y' || fmt === '%d/%m/%y') {
-                        const d2 = new Date(parts[2], parts[1] - 1, parts[0]);
-                        if (!isNaN(d2.getTime())) return d2;
-                    }
+            // Format: DD/M/YYYY or D/M/YYYY or YYYY-MM-DD
+            if (!dateStr) return null;
+            
+            // Try DD/MM/YYYY format (API format: "29/4/2026")
+            if (dateStr.includes('/')) {
+                const parts = dateStr.split('/');
+                if (parts.length === 3) {
+                    const day = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
+                    const year = parseInt(parts[2], 10);
+                    const d = new Date(year, month, day);
+                    return isNaN(d.getTime()) ? null : d;
                 }
             }
-            const d = new Date(dateStr);
-            return isNaN(d.getTime()) ? null : d;
+            // Try YYYY-MM-DD format
+            else if (dateStr.includes('-')) {
+                const d = new Date(dateStr);
+                return isNaN(d.getTime()) ? null : d;
+            }
+            return null;
         }
 
         function getMonthName(monthNum) {
@@ -348,12 +498,59 @@
         }
 
         function processData() {
-            const camoteData = getCamoteData();
-            const monthlyPrices = {};
+            // Separar datos: API (hoy) vs GitHub (histórico)
+            const apiCamote = allData.api.filter(item => item.producto?.toLowerCase().includes('camote'));
+            const githubCamote = allData.github.filter(item => item.producto?.toLowerCase().includes('camote'));
+            
+            log(`Camote API: ${apiCamote.length}, Camote GitHub: ${githubCamote.length}`);
+            
+            // Para precios de HOY: usar solo API (datos más recientes)
             const todayPrices = [];
-            let latestDate = null;
-
-            for (const item of camoteData) {
+            let latestApiDate = null;
+            
+            // Encontrar la fecha más reciente en la API
+            for (const item of apiCamote) {
+                const fecha = item.fecha;
+                if (!fecha) continue;
+                const parsed = parseDate(fecha);
+                if (!parsed) continue;
+                
+                if (!latestApiDate || parsed > latestApiDate) {
+                    latestApiDate = parsed;
+                }
+            }
+            
+            log(`Fecha más reciente en API: ${latestApiDate ? latestApiDate.toISOString() : 'No encontrada'}`);
+            
+            // Filtrar solo los registros de la fecha más reciente
+            if (latestApiDate) {
+                for (const item of apiCamote) {
+                    const fecha = item.fecha;
+                    if (!fecha) continue;
+                    const parsed = parseDate(fecha);
+                    if (parsed) {
+                        // Comparar solo día, mes, año (ignorar hora)
+                        const sameDay = parsed.getDate() === latestApiDate.getDate() &&
+                                       parsed.getMonth() === latestApiDate.getMonth() &&
+                                       parsed.getFullYear() === latestApiDate.getFullYear();
+                        if (sameDay) {
+                            todayPrices.push(item);
+                        }
+                    }
+                }
+            }
+            
+            log(`Precios de hoy encontrados: ${todayPrices.length}`);
+            if (todayPrices.length > 0) {
+                todayPrices.forEach(item => log(`  HOY: ${item.producto} - ₡${item.promedio}`));
+            }
+            
+            // Para tabla histórica: combinar GitHub + API
+            const allCamote = [...githubCamote, ...apiCamote];
+            
+            const monthlyPrices = {};
+            
+            for (const item of allCamote) {
                 const fecha = item.fecha;
                 const promedio = item.promedio;
                 if (!fecha || !promedio) continue;
@@ -361,17 +558,14 @@
                 const parsed = parseDate(fecha);
                 if (!parsed) continue;
 
-                const monthKey = `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}`;
+                const year = parsed.getFullYear();
+                const month = parsed.getMonth() + 1;
+                const monthKey = `${year}-${String(month).padStart(2, '0')}`;
                 const price = parseFloat(promedio);
 
                 if (!isNaN(price)) {
                     if (!monthlyPrices[monthKey]) monthlyPrices[monthKey] = [];
                     monthlyPrices[monthKey].push(price);
-
-                    if (!latestDate || parsed > latestDate) latestDate = parsed;
-                    if (parsed.toDateString() === latestDate?.toDateString()) {
-                        todayPrices.push(item);
-                    }
                 }
             }
 
@@ -382,7 +576,10 @@
                 }
             }
 
-            const avgAll = Object.values(monthlyAvg).length > 0 ? Object.values(monthlyAvg).reduce((a, b) => a + b, 0) / Object.values(monthlyAvg).length : 0;
+            log(`Meses con datos: ${Object.keys(monthlyAvg).length}`);
+            
+            const allAvgValues = Object.values(monthlyAvg);
+            const overallAvg = allAvgValues.length ? allAvgValues.reduce((a, b) => a + b, 0) / allAvgValues.length : 0;
 
             const tableData = Object.entries(monthlyAvg)
                 .sort((a, b) => new Date(a[0]) - new Date(b[0]))
@@ -398,18 +595,18 @@
                         year,
                         plantar_year: plantDate.getFullYear(),
                         precio: Math.round(price),
-                        recomendacion: price > avgAll * 1.1 ? 'OPTIMO' : price > avgAll ? 'BUENO' : 'MENOR'
+                        recomendacion: price > overallAvg * 1.1 ? 'OPTIMO' : price > overallAvg ? 'BUENO' : 'MENOR'
                     };
                 });
 
-            updateUI(monthlyAvg, tableData, todayPrices);
-        }
+updateUI(monthlyAvg, tableData, todayPrices);
+}
 
         function updateUI(monthly, table, today) {
             const sorted = Object.entries(monthly).sort((a, b) => b[1] - a[1]).slice(0, 6);
             const prices = Object.values(monthly);
-            const avg = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
-            const best = prices.length > 0 ? Math.max(...prices) : 0;
+            const avg = prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+            const best = prices.length ? Math.max(...prices) : 0;
 
             document.getElementById('lastUpdate').textContent = new Date().toLocaleString('es-CR');
             document.getElementById('dataCount').textContent = `${Object.keys(monthly).length} meses`;
@@ -423,18 +620,19 @@
             updateTodayPrices(today);
         }
 
-        function updatePlantingTable(table) {
-            const tbody = document.getElementById('plantingTableBody');
-            if (table.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8">Sin datos disponibles</td></tr>';
-                return;
-            }
-            tbody.innerHTML = table.map(item => {
-                const rowClass = item.recomendacion === 'OPTIMO' ? 'optimo' : item.recomendacion === 'BUENO' ? 'bueno' : '';
-                const badgeClass = item.recomendacion === 'OPTIMO' ? 'badge-optimo' : item.recomendacion === 'BUENO' ? 'badge-bueno' : 'badge-normal';
-                return `<tr class="${rowClass}"><td>${item.mes_cosecha} ${item.year}</td><td>${item.mes_plantar} ${item.plantar_year}</td><td class="precio">₡${item.precio.toLocaleString()}</td><td><span class="badge ${badgeClass}">${item.recomendacion}</span></td></tr>`;
-            }).join('');
-        }
+function updatePlantingTable(table) {
+const tbody = document.getElementById('plantingTableBody');
+log(`updatePlantingTable: ${table.length} registros`);
+if (table.length === 0) {
+tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8">Sin datos disponibles</td></tr>';
+return;
+}
+tbody.innerHTML = table.map(item => {
+const rowClass = item.recomendacion === 'OPTIMO' ? 'optimo' : item.recomendacion === 'BUENO' ? 'bueno' : '';
+const badgeClass = item.recomendacion === 'OPTIMO' ? 'badge-optimo' : item.recomendacion === 'BUENO' ? 'badge-bueno' : 'badge-normal';
+return `<tr class="${rowClass}"><td>${item.mes_cosecha} ${item.year}</td><td>${item.mes_plantar} ${item.plantar_year}</td><td class="precio">₡${item.precio.toLocaleString()}</td><td><span class="badge ${badgeClass}">${item.recomendacion}</span></td></tr>`;
+}).join('');
+}
 
         function updateChart(monthsData) {
             const ctx = document.getElementById('priceChart').getContext('2d');
@@ -448,18 +646,89 @@
             });
         }
 
-        function updateTodayPrices(prices) {
-            const container = document.getElementById('todayPrices');
-            if (prices.length === 0) {
-                container.innerHTML = '<p style="color:#94a3b8">Cargando precio más reciente...</p>';
+function updateTodayPrices(prices) {
+const container = document.getElementById('todayPrices');
+
+log(`updateTodayPrices: ${prices.length} precios encontrados`);
+
+// Si tenemos precios de hoy (API), mostrarlos
+if (prices.length > 0) {
+const item = prices[0];
+log(`Mostrando precio de ${item.producto} - fecha: ${item.fecha}`);
+let fechaStr = item.fecha || 'Reciente';
+if (fechaStr && fechaStr.includes('/')) {
+const parts = fechaStr.split('/');
+if (parts.length === 3) {
+fechaStr = `${parts[0].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[2]}`;
+}
+}
+document.getElementById('todayBadge').textContent = fechaStr;
+container.innerHTML = `<div style="margin-bottom:15px;font-weight:600">${item.producto}</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;"><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÍNIMO</div><div style="font-size:1.3rem;font-weight:700;color:#0ea5e9">₡${parseInt(item.minimo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÁXIMO</div><div style="font-size:1.3rem;font-weight:700;color:#f59e0b">₡${parseInt(item.maximo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">PROMEDIO</div><div style="font-size:1.3rem;font-weight:700;color:#22c55e">₡${parseInt(item.promedio).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MODA</div><div style="font-size:1.3rem;font-weight:700;color:#a855f7">₡${parseInt(item.moda).toLocaleString()}</div></div></div>`;
+return;
+}
+
+// Fallback: buscar el dato más reciente de cualquier fuente
+const allCamote = [...allData.api, ...allData.github].filter(item => {
+const esCamote = item.producto?.toLowerCase().includes('camote');
+log(`  - ${item.producto}: ${esCamote ? 'ES CAMOTE' : 'NO ES CAMOTE'}`);
+return esCamote;
+});
+
+if (allCamote.length > 0) {
+log(`Fallback: ${allCamote.length} registros de camote encontrados`);
+const sorted = allCamote.sort((a, b) => {
+const da = parseDate(a.fecha) || new Date(0);
+const db = parseDate(b.fecha) || new Date(0);
+return db - da;
+});
+const latest = sorted[0];
+log(`Fallback: mostrando ${latest.producto} - ${latest.fecha}`);
+let fechaStr = latest.fecha || 'Fecha desconocida';
+if (fechaStr && fechaStr.includes('/')) {
+const parts = fechaStr.split('/');
+if (parts.length === 3) {
+fechaStr = `${parts[0].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[2]}`;
+}
+}
+document.getElementById('todayBadge').textContent = fechaStr + ' (histórico)';
+container.innerHTML = `<div style="margin-bottom:15px;font-weight:600">${latest.producto}</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;"><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÍNIMO</div><div style="font-size:1.3rem;font-weight:700;color:#0ea5e9">₡${parseInt(latest.minimo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÁXIMO</div><div style="font-size:1.3rem;font-weight:700;color:#f59e0b">₡${parseInt(latest.maximo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">PROMEDIO</div><div style="font-size:1.3rem;font-weight:700;color:#22c55e">₡${parseInt(latest.promedio).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MODA</div><div style="font-size:1.3rem;font-weight:700;color:#a855f7">₡${parseInt(latest.moda).toLocaleString()}</div></div></div>`;
+return;
+}
+
+log('Fallback: No se encontraron datos de camote');
+container.innerHTML = '<p style="color:#94a3b8">Sin datos disponibles</p>';
+}
+                }
+                document.getElementById('todayBadge').textContent = fechaStr;
+                container.innerHTML = `<div style="margin-bottom:15px;font-weight:600">${item.producto}</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;"><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÍNIMO</div><div style="font-size:1.3rem;font-weight:700;color:#0ea5e9">₡${parseInt(item.minimo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÁXIMO</div><div style="font-size:1.3rem;font-weight:700;color:#f59e0b">₡${parseInt(item.maximo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">PROMEDIO</div><div style="font-size:1.3rem;font-weight:700;color:#22c55e">₡${parseInt(item.promedio).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MODA</div><div style="font-size:1.3rem;font-weight:700;color:#a855f7">₡${parseInt(item.moda).toLocaleString()}</div></div></div>`;
                 return;
             }
-            const item = prices[0];
-            document.getElementById('todayBadge').textContent = item.fecha || 'Reciente';
-            container.innerHTML = `<div style="margin-bottom:15px;font-weight:600">${item.producto}</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;"><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÍNIMO</div><div style="font-size:1.3rem;font-weight:700;color:#0ea5e9">₡${parseInt(item.minimo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÁXIMO</div><div style="font-size:1.3rem;font-weight:700;color:#f59e0b">₡${parseInt(item.maximo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">PROMEDIO</div><div style="font-size:1.3rem;font-weight:700;color:#22c55e">₡${parseInt(item.promedio).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MODA</div><div style="font-size:1.3rem;font-weight:700;color:#a855f7">₡${parseInt(item.moda).toLocaleString()}</div></div></div>`;
-        }
+            
+            // Fallback: buscar el dato más reciente de cualquier fuente
+            const allCamote = [...allData.api, ...allData.github].filter(item => item.producto?.toLowerCase().includes('camote'));
+            if (allCamote.length > 0) {
+                const sorted = allCamote.sort((a, b) => {
+                    const da = parseDate(a.fecha) || new Date(0);
+                    const db = parseDate(b.fecha) || new Date(0);
+                    return db - da;
+                });
+                const latest = sorted[0];
+                let fechaStr = latest.fecha || 'Fecha desconocida';
+                if (fechaStr && fechaStr.includes('/')) {
+                    const parts = fechaStr.split('/');
+                    if (parts.length === 3) {
+                        fechaStr = `${parts[0].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[2]}`;
+                    }
+                }
+                document.getElementById('todayBadge').textContent = fechaStr + ' (histórico)';
+                container.innerHTML = `<div style="margin-bottom:15px;font-weight:600">${latest.producto}</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;"><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÍNIMO</div><div style="font-size:1.3rem;font-weight:700;color:#0ea5e9">₡${parseInt(latest.minimo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MÁXIMO</div><div style="font-size:1.3rem;font-weight:700;color:#f59e0b">₡${parseInt(latest.maximo).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">PROMEDIO</div><div style="font-size:1.3rem;font-weight:700;color:#22c55e">₡${parseInt(latest.promedio).toLocaleString()}</div></div><div style="background:#0f172a;padding:12px;border-radius:10px;"><div style="font-size:0.7rem;color:#94a3b8">MODA</div><div style="font-size:1.3rem;font-weight:700;color:#a855f7">₡${parseInt(latest.moda).toLocaleString()}</div></div></div>`;
+                return;
+            }
+            
+container.innerHTML = '<p style="color:#94a3b8">Sin datos disponibles</p>';
+}
 
-        function sendCommand() {
+function sendCommand() {
             const input = document.getElementById('commandInput');
             const response = document.getElementById('commandResponse');
             const cmd = input.value.trim().toLowerCase();
