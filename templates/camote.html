@@ -851,8 +851,22 @@ function sendCommand() {
             input.value = '';
         }
 
-        document.getElementById('commandInput').addEventListener('keypress', e => e.key === 'Enter' && sendCommand());
-        document.addEventListener('DOMContentLoaded', loadAllData);
+document.getElementById('commandInput').addEventListener('keypress', e => e.key === 'Enter' && sendCommand());
+
+// Cargar datos cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+log('DOM ready, iniciando carga...');
+// Pequeño delay para asegurar que todo esté renderizado
+setTimeout(() => {
+loadAllData();
+}, 100);
+});
+
+// También intentar cargar inmediatamente si el DOM ya está listo
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+log('DOM ya estaba listo, cargando...');
+setTimeout(loadAllData, 100);
+}
     </script>
 </body>
 </html>
