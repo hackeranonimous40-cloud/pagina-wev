@@ -314,46 +314,42 @@
 async function loadAllData() {
 try {
 log('Cargando datos...');
-document.getElementById('plantingTableBody').innerHTML = '<tr><td colspan="4" class="loading"><div class="spinner"></div>Conectando a API...</td></tr>';
-document.getElementById('todayPrices').innerHTML = '<div class="spinner"></div> Cargando precios...';
+document.getElementById('plantingTableBody').innerHTML = '<tr><td colspan="4" class="loading"><div class="spinner"></div>Cargando datos...</td></tr>';
+document.getElementById('todayPrices').innerHTML = '<div class="spinner"></div> Cargando...';
 
 let apiData = [], githubData = [];
 
-// Intentar API directa
+// Intentar API directa primero
 try {
-log(`Tentando API: ${API_URL}`);
+log(`Tentando API directa: ${API_URL}`);
 const apiRes = await fetch(API_URL);
-log(`API response status: ${apiRes.status}`);
+log(`API status: ${apiRes.status}`);
 if (apiRes.ok) {
-apiData = await apiRes.json();
-log(`API directa: ${apiData.length} registros totales`);
-if (apiData.length > 0 && apiData[0]) {
-log(`Primer registro API: ${JSON.stringify(apiData[0])}`);
-}
-
-// Filtrar solo camote de la API
-const camoteOnly = apiData.filter(item => item.producto?.toLowerCase().includes('camote'));
-log(`Camote en API: ${camoteOnly.length}`);
-if (camoteOnly.length > 0) {
-camoteOnly.forEach(item => log(` - ${item.producto}: ${item.fecha} - ₡${item.promedio}`));
+const rawApiData = await apiRes.json();
+apiData = Array.isArray(rawApiData) ? rawApiData : [];
+log(`API directa OK: ${apiData.length} registros`);
+if (apiData.length > 0) {
+log(`Ejemplo API: ${JSON.stringify(apiData[0])}`);
 }
 } else {
-throw new Error(`HTTP ${apiRes.status}`);
+log(`API HTTP error: ${apiRes.status}`);
 }
 } catch (e) {
 log('API directa falló: ' + e.message);
+}
+
+// Si no hay datos de API, intentar proxy
+if (apiData.length === 0) {
 try {
-log('Intentando proxy API...');
+log('Intentando API por proxy...');
 const proxyRes = await fetch(PROXY_URL + encodeURIComponent(API_URL));
 if (proxyRes.ok) {
-apiData = await proxyRes.json();
-log(`API proxy: ${apiData.length} registros`);
-if (apiData.length > 0 && apiData[0]) {
-log(`Primer registro API proxy: ${JSON.stringify(apiData[0])}`);
-}
+const rawProxyData = await proxyRes.json();
+apiData = Array.isArray(rawProxyData) ? rawProxyData : [];
+log(`API proxy OK: ${apiData.length} registros`);
 }
 } catch (e2) {
-log('Proxy API también falló: ' + e2.message);
+log('Proxy API falló: ' + e2.message);
 }
 }
 
@@ -361,47 +357,49 @@ log('Proxy API también falló: ' + e2.message);
 try {
 log(`Tentando GitHub: ${GITHUB_URL}`);
 const ghRes = await fetch(GITHUB_URL);
-log(`GitHub response status: ${ghRes.status}`);
+log(`GitHub status: ${ghRes.status}`);
 if (ghRes.ok) {
-githubData = await ghRes.json();
-log(`GitHub directo: ${githubData.length} registros`);
-if (githubData.length > 0 && githubData[0]) {
-log(`Primer registro GitHub: ${JSON.stringify(githubData[0])}`);
-}
-} else {
-throw new Error(`HTTP ${ghRes.status}`);
+const rawGithubData = await ghRes.json();
+githubData = Array.isArray(rawGithubData) ? rawGithubData : [];
+log(`GitHub OK: ${githubData.length} registros`);
 }
 } catch (e) {
-log('GitHub directo falló: ' + e.message);
+log('GitHub falló: ' + e.message);
+}
+
+// Si no hay datos de GitHub, intentar proxy
+if (githubData.length === 0) {
 try {
-log('Intentando proxy GitHub...');
+log('Intentando GitHub por proxy...');
 const proxyRes = await fetch(PROXY_URL + encodeURIComponent(GITHUB_URL));
 if (proxyRes.ok) {
-githubData = await proxyRes.json();
-log(`GitHub proxy: ${githubData.length} registros`);
-if (githubData.length > 0 && githubData[0]) {
-log(`Primer registro GitHub proxy: ${JSON.stringify(githubData[0])}`);
-}
+const rawProxyData = await proxyRes.json();
+githubData = Array.isArray(rawProxyData) ? rawProxyData : [];
+log(`GitHub proxy OK: ${githubData.length} registros`);
 }
 } catch (e2) {
-log('Proxy GitHub también falló: ' + e2.message);
+log('Proxy GitHub falló: ' + e2.message);
 }
 }
 
-allData = {
-api: Array.isArray(apiData) ? apiData : [],
-github: Array.isArray(githubData) ? githubData : []
-};
+// Guardar datos
+allData = { api: apiData, github: githubData };
+log(`Total datos: API=${apiData.length}, GitHub=${githubData.length}`);
 
-log(`Total: API=${allData.api.length}, GitHub=${allData.github.length}`);
-
-if (allData.api.length === 0 && allData.github.length === 0) {
-throw new Error('No se pudieron obtener datos. Verifica tu conexión.');
+// Verificar si hay datos
+const totalRecords = apiData.length + githubData.length;
+if (totalRecords === 0) {
+log('ERROR: No se obtuvieron datos de ninguna fuente');
+document.getElementById('plantingTableBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ef4444">Error: No se pudieron obtener datos</td></tr>';
+document.getElementById('todayPrices').innerHTML = '<p style="color:#ef4444">Sin datos disponibles</p>';
+return;
 }
 
+// Procesar datos
+log('Procesando datos...');
 processData();
 } catch (error) {
-console.error('Error:', error);
+console.error('Error general:', error);
 log('ERROR: ' + error.message);
 document.getElementById('plantingTableBody').innerHTML = `<tr><td colspan="4" style="text-align:center;color:#ef4444">Error: ${error.message}</td></tr>`;
 document.getElementById('todayPrices').innerHTML = `<p style="color:#ef4444">Error: ${error.message}</p>`;
@@ -497,27 +495,115 @@ document.getElementById('todayPrices').innerHTML = `<p style="color:#ef4444">Err
             return months[monthNum] || '';
         }
 
-        function processData() {
-            // Separar datos: API (hoy) vs GitHub (histórico)
-            const apiCamote = allData.api.filter(item => item.producto?.toLowerCase().includes('camote'));
-            const githubCamote = allData.github.filter(item => item.producto?.toLowerCase().includes('camote'));
-            
-            log(`Camote API: ${apiCamote.length}, Camote GitHub: ${githubCamote.length}`);
-            
-            // Para precios de HOY: usar solo API (datos más recientes)
-            const todayPrices = [];
-            let latestApiDate = null;
-            
-            // Encontrar la fecha más reciente en la API
-            for (const item of apiCamote) {
-                const fecha = item.fecha;
-                if (!fecha) continue;
-                const parsed = parseDate(fecha);
-                if (!parsed) continue;
-                
-                if (!latestApiDate || parsed > latestApiDate) {
-                    latestApiDate = parsed;
-                }
+function processData() {
+log('=== processData iniciado ===');
+log(`Datos disponibles - API: ${allData.api.length}, GitHub: ${allData.github.length}`);
+
+// Filtrar solo camote
+const apiCamote = allData.api.filter(item => {
+const esCamote = item.producto?.toLowerCase().includes('camote');
+return esCamote;
+});
+const githubCamote = allData.github.filter(item => {
+const esCamote = item.producto?.toLowerCase().includes('camote');
+return esCamote;
+});
+
+log(`Camote filtrado - API: ${apiCamote.length}, GitHub: ${githubCamote.length}`);
+
+if (apiCamote.length > 0) {
+log('Ejemplo API Camote:', JSON.stringify(apiCamote[0]));
+}
+
+// Obtener fecha más reciente de la API
+let latestApiDate = null;
+for (const item of apiCamote) {
+if (item.fecha) {
+const parsed = parseDate(item.fecha);
+if (parsed && (!latestApiDate || parsed > latestApiDate)) {
+latestApiDate = parsed;
+}
+}
+}
+
+log(`Fecha más reciente API: ${latestApiDate ? latestApiDate.toLocaleDateString() : 'N/A'}`);
+
+// Obtener precios de la fecha más reciente
+let todayPrices = [];
+if (latestApiDate) {
+todayPrices = apiCamote.filter(item => {
+if (!item.fecha) return false;
+const parsed = parseDate(item.fecha);
+if (!parsed) return false;
+return parsed.getDate() === latestApiDate.getDate() &&
+parsed.getMonth() === latestApiDate.getMonth() &&
+parsed.getFullYear() === latestApiDate.getFullYear();
+});
+}
+
+log(`Precios de hoy (${latestApiDate ? latestApiDate.toLocaleDateString() : 'N/A'}): ${todayPrices.length}`);
+
+// Combinar todos los datos para la tabla histórica
+const allCamote = [...githubCamote, ...apiCamote];
+log(`Total datos combinados: ${allCamote.length}`);
+
+// Procesar precios por mes
+const monthlyPrices = {};
+for (const item of allCamote) {
+if (!item.fecha || !item.promedio) continue;
+const parsed = parseDate(item.fecha);
+if (!parsed) continue;
+
+const year = parsed.getFullYear();
+const month = parsed.getMonth() + 1;
+const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+const price = parseFloat(item.promedio);
+
+if (!isNaN(price)) {
+if (!monthlyPrices[monthKey]) monthlyPrices[monthKey] = [];
+monthlyPrices[monthKey].push(price);
+}
+}
+
+// Calcular promedios mensuales
+const monthlyAvg = {};
+for (const [key, prices] of Object.entries(monthlyPrices)) {
+if (prices.length > 0) {
+monthlyAvg[key] = prices.reduce((a, b) => a + b, 0) / prices.length;
+}
+}
+
+log(`Meses procesados: ${Object.keys(monthlyAvg).length}`);
+
+// Calcular promedio general
+const allAvgValues = Object.values(monthlyAvg);
+const overallAvg = allAvgValues.length > 0 ?
+allAvgValues.reduce((a, b) => a + b, 0) / allAvgValues.length : 0;
+
+// Crear tabla de datos
+const tableData = Object.entries(monthlyAvg)
+.sort((a, b) => new Date(a[0]) - new Date(b[0]))
+.map(([monthKey, price]) => {
+const [year, month] = monthKey.split('-').map(Number);
+const plantDate = new Date(year, month - 1, 1);
+plantDate.setMonth(plantDate.getMonth() - 3);
+plantDate.setDate(plantDate.getDate() - 15);
+
+return {
+mes_cosecha: getMonthName(month),
+mes_plantar: getMonthName(plantDate.getMonth() + 1),
+year,
+plantar_year: plantDate.getFullYear(),
+precio: Math.round(price),
+recomendacion: price > overallAvg * 1.1 ? 'OPTIMO' : price > overallAvg ? 'BUENO' : 'MENOR'
+};
+});
+
+log(`Tabla creada con ${tableData.length} registros`);
+log('=== processData finalizado ===');
+
+updateUI(monthlyAvg, tableData, todayPrices);
+}
             }
             
             log(`Fecha más reciente en API: ${latestApiDate ? latestApiDate.toISOString() : 'No encontrada'}`);
